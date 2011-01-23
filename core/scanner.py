@@ -121,7 +121,7 @@ class ScannerThread(Thread):
 									self.ed.vulnerability( target, self.kbitem, None )
 									return
 					elif payload.scope.lower() == 'http':
-						resp404 = None
+						resp404 = None 
 						try:
 							non_existent_url      = target.url.copy()
 							non_existent_url.path =  "/%s" % self.__genRandom()

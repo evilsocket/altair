@@ -192,6 +192,7 @@
 		<match type="simple">java.lang.NumberFormatException: For input string:</match>
 		<match type="simple">): encountered SQLException [</match>
 		<match type="simple">Unexpected end of command in statement [</match>
+		<match type="simple">mysql_fetch_assoc() expects parameter</match>
 		<match type="regex">(?i)(Line\s\d+:\sIncorrect\ssyntax\snear\s'[^']*')</match>
 		<match type="regex">(?i)(pg_query\(\)[:]*\squery\sfailed:\serror:\s)</match>
 		<match type="regex">(?i)(Microsoft\sJScript\sruntime.*error\s'[^']*')</match>
