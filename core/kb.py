@@ -38,10 +38,13 @@ class Match:
 		return Match( self.type, self.data )
 		
 	def match( self, string ):
-		if self.type == 'simple':
-			return self.data in string
-		elif self.type == 'regex':
-			return re.match( self.data, string )
+		try:
+			if self.type == 'simple':
+				return self.data in string
+			elif self.type == 'regex':
+				return re.match( self.data, string )
+		except Exception as e:
+			print e
 			
 class KBItem:
 	def __init__( self, id,name, severity, description ):

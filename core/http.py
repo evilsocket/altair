@@ -176,16 +176,22 @@ class Request:
 			
 	def fetch( self ):
 		self.redirect = None
-		
 		req    = urllib2.Request( self.dyn_url.get(), urlencode(self.dyn_fields) if self.dyn_fields != {} else None, self.headers )
 		opener = urllib2.build_opener( RedirectHandler() )
 		res    = opener.open(req)
 		resp   = res.read()
-		
+	
 		if res.url != ("%s://%s%s" % ( self.url.scheme, self.url.netloc, self.url.path )):
 			self.redirect = res.url
 			
-		return resp
+		# extract charset
+		charset = re.findall( "\s+charset\s*\=\s*([^'\"]+)\s*", resp )
+		if len(charset):
+			charset = charset[0]
+		else:
+			charset = 'UTF-8'
+			
+		return unicode( resp, charset )
 		
 class GetRequest(Request):
 	def __init__( self, url ):

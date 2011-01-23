@@ -204,12 +204,14 @@
 	
 	<item name="Remote File Inclusions" severity="high" id="rfi">
 		<description>A remote file inclusion happens when a page includes a file whose name is taken from a GET or POST variable that is not sanitized or checked ahead of time .</description>
-
+		<payload scope="*">http://www.google.it</payload>
 		<payload scope="*">@RANDOM</payload>	
 		<payload scope="*">/@RANDOM</payload>	
 		<payload scope="*">../@RANDOM</payload>	
+		
 		<match type="simple">Failed opening required '@RANDOM'</match>
 		<match type="simple">Failed opening '@RANDOM'</match>
+		<match type="simple">www.google.it</match>
 	</item>
 	
 	<item name="Local File Inclusions" severity="high" id="lfi">
