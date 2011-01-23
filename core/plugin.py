@@ -45,7 +45,7 @@ class PluginManager:
 			for name in files:
 				if name.endswith(".py") and not name.startswith("__"):
 					path 	   = os.path.join(root, name)
-					modulename = path.rsplit('.', 1)[0].replace('/', '.')
+					modulename = "core.modules" + path.rsplit( 'core/modules' )[1].rsplit('.',1)[0].replace('/','.')
 					module	   = __import__(modulename)
 					# walk the dictionaries to get to the last one
 					d = module.__dict__

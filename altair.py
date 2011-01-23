@@ -26,6 +26,7 @@ from core.edispatcher import EventDispatcher
 from core.plugin import PluginManager
 import sys
 import re
+import os
 from optparse import OptionParser, OptionGroup 
 
 def csv2array( csv ):
@@ -52,6 +53,8 @@ parser = OptionParser( usage = "usage: %prog [options] -u <target>\n\n" +
                                "  %prog --filter=lfi,rfi --url=http://www.somesite.com\n" +
                                "  %prog --filter=sqli --load-modules=sqlmap --url=http://www.somesite.com" )
 
+path   = os.path.dirname(os.path.realpath(__file__))
+
 parser.add_option( "-t", "--threads",      action="store",      dest="Threads", 	      default=50,		   help="Max simultaneous threads." )
 parser.add_option( "-e", "--ext", 	       action="store",      dest="AllowedExtensions", default="cgi,cfm,asp,aspx,php,php2,php3,php4,php5,htm,html,shtm,shtml,jsp,do,py", help="Comma separated allowed extensions." )
 parser.add_option( "-a", "--ua", 	       action="store",      dest="UserAgent",         default=None, 	   help="Custom user agent." )
@@ -63,12 +66,13 @@ parser.add_option( "-S", "--proxy-server", action="store",      dest="ProxyServe
 parser.add_option( "-P", "--proxy-port",   action="store",      dest="ProxyPort",         default=9051,		   help="Proxy server port." )
 parser.add_option( "-f", "--filter",       action="store",      dest="KbFilter",          default='*',         help="Comma separated ids of vulnerabilities to test, default to all, use the --list-ids flag to enumerate available ids." )
 parser.add_option( "-I", "--list-ids",	   action="store_true", dest="IdList",            default=False,       help="Print a list of available ids in the knowledge base to be used with the --filter flag." )
-parser.add_option( "-k", "--kb", 	       action="store",      dest="KbFile",            default="kb.xml",    help="Knowledge base file to use, default kb.xml." )
+parser.add_option( "-k", "--kb", 	       action="store",      dest="KbFile",            default="%s/kb.xml" % path, help="Knowledge base file to use, default kb.xml." )
 parser.add_option( "-L", "--load-modules", action="store",		dest="Modules", 		  default='',		   help="Comma separated modules names to load or 'all' to load them all, use the --list-modules flag to a list of available modules." )
 parser.add_option( "-M", "--list-modules", action="store_true", dest="ModList",           default=False,       help="Print a list of available modules." )
 parser.add_option( "-u", "--url",          action="store",      dest="url",               default=None, 	   help="Url to test, mandatory." )
 
 (o,args) = parser.parse_args()
+
 
 if o.IdList == True:
 	kb = KnowledgeBase( o.KbFile, ['*'] )
@@ -77,7 +81,7 @@ if o.IdList == True:
 			print "[%s] %s :\n%s\n" % (item.id, item.name, item.description)
 	quit()
 elif o.ModList == True:
-	pm = PluginManager( "core/modules", None )
+	pm = PluginManager( "%s/core/modules" % path, None )
 	pm.loadPlugins()
 	for plugin in pm.plugins:
 		print "[+] '%s' by %s : %s" % (plugin.name, plugin.author, plugin.description)
@@ -97,7 +101,7 @@ o.AllowedExtensions = csv2array(o.AllowedExtensions)
 o.Modules			= csv2array(o.Modules)
 
 ed = EventDispatcher(None)
-pm = PluginManager( "core/modules", ed )
+pm = PluginManager( "core/modules" % path, ed )
 ed.pmanager = pm
 
 pm.loadPlugins( o.Modules )
