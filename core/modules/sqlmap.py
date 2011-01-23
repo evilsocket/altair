@@ -33,4 +33,4 @@ class SqlMap(Plugin):
 		if kbitem.id == "sqli":
 			resp = raw_input( "[!] A sql injection was found on '%s', do you want me to spawn a sqlmap instance to exploit it ? [yN]" % target.url.path )
 			if resp.strip() != '' and resp in "Yy":
-				Popen( "sqlmap -u '%s' -o --threads 30 --text-only --union-test --tables -p %s" % (target.url.get(), parameter), shell = True, executable = "/bin/bash" ).wait()
+				Popen( "sqlmap -u '%s' -o --threads 30 --text-only --dbs -p %s" % (target.url.get(), parameter), shell = True, executable = "/bin/bash" ).wait()
