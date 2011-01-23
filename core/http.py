@@ -181,14 +181,15 @@ class Request:
 			return True
 			
 	def fetch( self ):
-		self.redirect = None
 		req    = urllib2.Request( self.dyn_url.get(), urlencode(self.dyn_fields) if self.dyn_fields != {} else None, self.headers )
 		opener = urllib2.build_opener( RedirectHandler() )
 		res    = opener.open(req)
 		resp   = res.read()
-	
+		
 		if res.url != ("%s://%s%s" % ( self.url.scheme, self.url.netloc, self.url.path )):
 			self.redirect = res.url
+		else:
+			self.redirect = None
 			
 		# extract charset
 		charset = re.findall( "\s+charset\s*\=\s*([^'\"]+)\s*", resp )

@@ -56,7 +56,7 @@ parser = OptionParser( usage = "usage: %prog [options] -u <target>\n\n" +
 path   = os.path.dirname(os.path.realpath(__file__))
 
 parser.add_option( "-t", "--threads",      action="store",      dest="Threads", 	      default=50,		   help="Max simultaneous threads." )
-parser.add_option( "-e", "--ext", 	       action="store",      dest="AllowedExtensions", default="cgi,cfm,asp,aspx,php,php2,php3,php4,php5,htm,html,shtm,shtml,js,vbs,jsp,do,py", help="Comma separated allowed extensions." )
+parser.add_option( "-e", "--ext", 	       action="store",      dest="AllowedExtensions", default="cgi,cfm,asp,aspx,pl,php,php2,php3,php4,php5,htm,html,shtm,shtml,js,vbs,jsp,do,py", help="Comma separated allowed extensions." )
 parser.add_option( "-a", "--ua", 	       action="store",      dest="UserAgent",         default=None, 	   help="Custom user agent." )
 parser.add_option( "-d", "--enable-delay", action="store_true", dest="CrawlDelayEnabled", default=False,	   help="Enable crawling delay." )
 parser.add_option( "-s", "--crawl-delay",  action="store",      dest="CrawlDelay",        default=100, 		   help="Crawling delay in ms." )
