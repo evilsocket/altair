@@ -28,6 +28,15 @@ import sys
 import re
 from optparse import OptionParser, OptionGroup 
 
+def csv2array( csv ):
+	items = csv.split(',')
+	res   = []
+	for i, item in enumerate(items):
+		item = item.strip()
+		if item != '':
+			res.append(item)
+	return res
+
 # nasty hack to have the setdefaultencoding function available
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -83,9 +92,9 @@ o.Threads			= int(o.Threads)
 o.CrawlDelay		= int(o.CrawlDelay)
 o.MaxDirectoryDepth = int(o.MaxDirectoryDepth)
 o.ProxyPort			= int(o.ProxyPort)
-o.KbFilter   		= o.KbFilter.split(',')
-o.AllowedExtensions = o.AllowedExtensions.split(',')
-o.Modules			= o.Modules.split(',')
+o.KbFilter   		= csv2array(o.KbFilter)
+o.AllowedExtensions = csv2array(o.AllowedExtensions)
+o.Modules			= csv2array(o.Modules)
 
 ed = EventDispatcher(None)
 pm = PluginManager( "core/modules", ed )
