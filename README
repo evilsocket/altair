@@ -1,0 +1,42 @@
+ALTAIR - A Modular Web Vulnerability Scanner
+Copyleft by Simone Margaritelli <evilsocket@gmail.com>
+http://www.evilsocket.net - http://www.backbox.org
+
+Usage: altair.py [options] -u <target>
+
+EXAMPLES:
+  altair.py --filter=lfi,rfi --url=http://www.somesite.com
+  altair.py --filter=sqli --load-modules=sqlmap --url=http://www.somesite.com
+
+Options:
+  -h, --help            show this help message and exit
+  -t THREADS, --threads=THREADS
+                        Max simultaneous threads.
+  -e ALLOWEDEXTENSIONS, --ext=ALLOWEDEXTENSIONS
+                        Comma separated allowed extensions.
+  -a USERAGENT, --ua=USERAGENT
+                        Custom user agent.
+  -d, --enable-delay    Enable crawling delay.
+  -s CRAWLDELAY, --crawl-delay=CRAWLDELAY
+                        Crawling delay in ms.
+  -m MAXDIRECTORYDEPTH, --max-depth=MAXDIRECTORYDEPTH
+                        Max directory depth.
+  -p, --enable-proxy    Enable proxy support.
+  -S PROXYSERVER, --proxy-server=PROXYSERVER
+                        Proxy server address.
+  -P PROXYPORT, --proxy-port=PROXYPORT
+                        Proxy server port.
+  -f KBFILTER, --filter=KBFILTER
+                        Comma separated ids of vulnerabilities to test,
+                        default to all, use the --list-ids flag to enumerate
+                        available ids.
+  -I, --list-ids        Print a list of available ids in the knowledge base to
+                        be used with the --filter flag.
+  -k KBFILE, --kb=KBFILE
+                        Knowledge base file to use, default kb.xml.
+  -L MODULES, --load-modules=MODULES
+                        Comma separated modules names to load or 'all' to load
+                        them all, use the --list-modules flag to a list of
+                        available modules.
+  -M, --list-modules    Print a list of available modules.
+  -u URL, --url=URL     Url to test, mandatory.
