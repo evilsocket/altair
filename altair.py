@@ -101,7 +101,7 @@ o.AllowedExtensions = csv2array(o.AllowedExtensions)
 o.Modules			= csv2array(o.Modules)
 
 ed = EventDispatcher(None)
-pm = PluginManager( "core/modules" % path, ed )
+pm = PluginManager( "%s/core/modules" % path, ed )
 ed.pmanager = pm
 
 pm.loadPlugins( o.Modules )
