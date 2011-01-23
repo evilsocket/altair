@@ -40,3 +40,32 @@ Options:
                         available modules.
   -M, --list-modules    Print a list of available modules.
   -u URL, --url=URL     Url to test, mandatory.
+
+----------------------------------------------------------------------------------------
+
+[evilsocket@shinigami altair] ./altair.py -I
+
+[xss] Cross Site Scriptings :
+A cross site scripting vulnerability, also known as XSS, is one of the most common vulnerabilities in web apps. The server does not check the users' input, and parses GET variables (can be done also through POST sometimes), without sanitizing them ahead of time. This allows users to inject html, javascript, or other code, through the page affected by this kind of bug. These injections occur client side (the server side code will be not modified), but the html stream that the user receives will contain the injected code . Usually this type of flaw is used to obtain private data such as cookies, data that often contains the credentials to access protected pages.
+
+[sqli] SQL Injections :
+An SQL injection, or SQL code injection, is another example of how a lack of checking user inputed data can undermine our site's security. Nowadays 90% of existing websites rely on a database to store contents such as news, articles, or simply to manage the users; this means that if not placed through an accurate checking process, the data send from an attacker can affect the information present in our database. An SQL injection, as the name itself suggests, is made by injecting arbitrary sql code in a variable sent to the website, both GET or POST, to obtain data from the db, data that would not be normally accessible .
+
+[rfi] Remote File Inclusions :
+A remote file inclusion happens when a page includes a file whose name is taken from a GET or POST variable that is not sanitized or checked ahead of time .
+
+[lfi] Local File Inclusions :
+A local file inclusion happens when a page includes a file whose name is taken from a GET or POST variable that is not sanitized or checked ahead of time .
+
+[files] Sensitive Files :
+Potential sensitive file .
+
+[dirs] Sensitive Directories :
+Potential sensitive directory .
+
+----------------------------------------------------------------------------------------
+
+[evilsocket@shinigami altair] ./altair.py -M
+
+[+] 'lfier' by Simone Margaritelli <evilsocket@gmail.com> : This module will try to read some standard system files upon LFI vulnerabilities.
+[+] 'sqlmap' by Simone Margaritelli <evilsocket@gmail.com> : This module will ask the user to launch sqlmap when a sql injection is found.

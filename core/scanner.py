@@ -20,7 +20,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 from html import Parser
 from http import *
-from config import Config
 from kb import *
 from edispatcher import EventDispatcher
 from threadpool import ThreadPool

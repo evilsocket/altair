@@ -20,7 +20,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 from core.html import Parser
 from core.http import *
-#from core.config import Config
 from core.kb import *
 from core.scanner import Scanner
 from core.edispatcher import EventDispatcher
