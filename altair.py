@@ -38,6 +38,10 @@ def csv2array( csv ):
 			res.append(item)
 	return res
 
+# nasty hack to have the setdefaultencoding function available
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 print "\n --------------------------------------------------------\n" + \
 	  "|    Altair 1.0 - A Modular Web Vulnerability Scanner    |\n" + \
 	  "| Copyleft by Simone Margaritelli <evilsocket@gmail.com> |\n" + \

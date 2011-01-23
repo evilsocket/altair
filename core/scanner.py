@@ -142,8 +142,8 @@ class ScannerThread(Thread):
 							pass					
 				except HTTPError as e:
 					self.ed.warning(e)
-				except:
-					pass
+				except Exception as e:
+					self.ed.warning(e)
 		
 class Scanner:
 	def __init__( self, kb, cfg, targets, edispatcher ):

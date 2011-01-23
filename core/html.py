@@ -39,6 +39,7 @@ class Parser(HTMLParser):
 		self.parsed	  = []
 		self.form	  = None
 		self.ed		  = edispatcher
+		self.current  = None
 		
 	def parse( self, request ):
 		# check for a valid extension
@@ -79,6 +80,8 @@ class Parser(HTMLParser):
 			
 			response = BeautifulSoup(response).prettify()
 			
+			self.current = request.url
+			
 			self.ed.parsing( request.url )
 			
 			self.feed( response )
@@ -93,8 +96,10 @@ class Parser(HTMLParser):
 						req = GetRequest( url )
 						if req not in self.requests:
 							self.requests.append( req )
-		except:
-			pass
+		except HTTPError as e:	
+			self.ed.warning( e )
+		except Exception as e:
+			self.ed.warning( e )
 		finally:
 			self.parsed.append( request )
 		
@@ -113,7 +118,7 @@ class Parser(HTMLParser):
 		tag = tag.lower()
 		if tag == 'a':
 			href = self.__get_attr( 'href', attrs )
-			url  = Url( href, default_netloc = self.domain, default_path = self.root.path )
+			url  = Url( href, default_netloc = self.domain, default_path = self.current.path )
 			if url.netloc == self.domain and url.scheme == self.scheme:
 				req = GetRequest( url )
 				if req not in self.requests:
@@ -122,7 +127,7 @@ class Parser(HTMLParser):
 			src = self.__get_attr( 'src', attrs )
 			for ext in self.config.AllowedExtensions:
 				if re.match( ".+\.%s.*" % ext, src ):
-					url = Url( src, default_netloc = self.domain, default_path = self.root.path )
+					url = Url( src, default_netloc = self.domain, default_path = self.current.path )
 					if url.netloc == self.domain and url.scheme == self.scheme:
 						req = GetRequest( url )
 						if req not in self.requests:
@@ -130,7 +135,7 @@ class Parser(HTMLParser):
 							break
 		elif tag == 'frame' or tag == 'iframe':
 			src = self.__get_attr( 'src', attrs )
-			url = Url( src, default_netloc = self.domain, default_path = self.root.path )
+			url = Url( src, default_netloc = self.domain, default_path = self.current.path )
 			if url.netloc == self.domain and url.scheme == self.scheme:
 				req = GetRequest( url )
 				if req not in self.requests:
@@ -138,7 +143,7 @@ class Parser(HTMLParser):
 		elif tag == 'form':
 			self.form 		    = {}
 			self.form['data']   = {}
-			self.form['action'] = self.__get_attr( 'action', attrs, self.root.path )
+			self.form['action'] = self.__get_attr( 'action', attrs, self.current.path )
 			self.form['method'] = self.__get_attr( 'method', attrs, 'get' ).lower()
 		elif self.form != None:
 			if tag == 'input':
@@ -151,7 +156,6 @@ class Parser(HTMLParser):
 	def handle_endtag( self, tag ):
 		tag = tag.lower()
 		if tag == 'form' and self.form != None:
-			# {'action': 'search.php?test=query', 'data': {'searchFor': '', 'goButton': 'go'}, 'method': 'post'}
 			if self.form['method'] == 'get':
 				link = self.form['action'] + "?" + urlencode( self.form['data'] )
 				url  = Url( link, default_netloc = self.domain )
@@ -161,7 +165,7 @@ class Parser(HTMLParser):
 						self.requests.append( req )
 			elif self.form['method'] == 'post':
 				link = self.form['action']
-				url  = Url( link, default_netloc = self.domain, default_path = self.root.path )
+				url  = Url( link, default_netloc = self.domain, default_path = self.current.path )
 				if url.netloc == self.domain and url.scheme == self.scheme:
 					req = PostRequest(url)
 					for name, value in self.form['data'].items():
