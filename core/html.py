@@ -26,6 +26,7 @@ from urllib import *
 import os
 import re
 import time
+from thirdparties.BeautifulSoup import BeautifulSoup
 
 class Parser(HTMLParser):
 	def __init__( self, root, config, edispatcher ):
@@ -40,8 +41,6 @@ class Parser(HTMLParser):
 		self.ed		  = edispatcher
 		
 	def parse( self, request ):
-		self.ed.parsing( request.url )
-		
 		# check for a valid extension
 		if self.config.AllowedExtensions != None:
 			( root, ext ) = os.path.splitext( request.url.path )
@@ -68,9 +67,32 @@ class Parser(HTMLParser):
 			if self.config.ProxyEnabled != None and self.config.ProxyEnabled == True:
 				self.ed.status( "Setting request proxy to %s:%d ." % ( self.config.ProxyServer, self.config.ProxyPort ) )
 				request.setProxy( self.config.ProxyServer, self.config.ProxyPort )
+		
+			response = request.fetch()
+			# fix broken html
+			response = re.sub( "href\s*=\s*([^\"'\s>]+)" , r'href="\1"', response )
+			response = re.sub( "src\s*=\s*([^\"'\s>]+)" , r'src="\1"', response )
+			response = re.sub( "action\s*=\s*([^\"'\s>]+)" , r'action="\1"', response )
+			response = re.sub( "method\s*=\s*([^\"'\s>]+)" , r'method="\1"', response )
+			response = re.sub( "name\s*=\s*([^\"'\s>]+)" , r'name="\1"', response )
+			response = re.sub( "value\s*=\s*([^\"'\s>]+)" , r'value="\1"', response )
 			
-			self.feed( request.fetch() )
+			response = BeautifulSoup(response).prettify()
+			
+			self.ed.parsing( request.url )
+			
+			self.feed( response )
 			self.close()
+			
+			# custom parsing
+			pages = re.findall( 'window\.open\s*\(\s*[\'"]([^\'"]+)',  response )
+			if pages != None:
+				for page in pages:
+					url = Url( page, default_netloc = self.domain, default_path = self.root.path )
+					if url.netloc == self.domain and url.scheme == self.scheme:
+						req = GetRequest( url )
+						if req not in self.requests:
+							self.requests.append( req )
 		except:
 			pass
 		finally:
@@ -91,21 +113,28 @@ class Parser(HTMLParser):
 		tag = tag.lower()
 		if tag == 'a':
 			href = self.__get_attr( 'href', attrs )
-			url  = Url( href, default_netloc = self.domain )
+			url  = Url( href, default_netloc = self.domain, default_path = self.root.path )
 			if url.netloc == self.domain and url.scheme == self.scheme:
 				req = GetRequest( url )
 				if req not in self.requests:
 					self.requests.append( req )
-		if tag == 'img':
+		elif tag == 'img':
 			src = self.__get_attr( 'src', attrs )
 			for ext in self.config.AllowedExtensions:
 				if re.match( ".+\.%s.*" % ext, src ):
-					url = Url( src, default_netloc = self.domain )
+					url = Url( src, default_netloc = self.domain, default_path = self.root.path )
 					if url.netloc == self.domain and url.scheme == self.scheme:
 						req = GetRequest( url )
 						if req not in self.requests:
 							self.requests.append( req )
 							break
+		elif tag == 'frame' or tag == 'iframe':
+			src = self.__get_attr( 'src', attrs )
+			url = Url( src, default_netloc = self.domain, default_path = self.root.path )
+			if url.netloc == self.domain and url.scheme == self.scheme:
+				req = GetRequest( url )
+				if req not in self.requests:
+					self.requests.append( req )
 		elif tag == 'form':
 			self.form 		    = {}
 			self.form['data']   = {}
@@ -132,7 +161,7 @@ class Parser(HTMLParser):
 						self.requests.append( req )
 			elif self.form['method'] == 'post':
 				link = self.form['action']
-				url  = Url( link, default_netloc = self.domain )
+				url  = Url( link, default_netloc = self.domain, default_path = self.root.path )
 				if url.netloc == self.domain and url.scheme == self.scheme:
 					req = PostRequest(url)
 					for name, value in self.form['data'].items():

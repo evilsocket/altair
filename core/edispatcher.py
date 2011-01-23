@@ -45,6 +45,12 @@ class EventDispatcher:
 		for plugin in self.pmanager.plugins:
 			plugin.onUrlCrawling( url )
 		
+	def stopped( self, target ):
+		self.print_mutex.acquire()
+		print "[@] Scanning process finished ."
+		for plugin in self.pmanager.plugins:
+			plugin.onScanFinished(target)
+		self.print_mutex.release()
 		
 	def vulnerability( self, target, kbitem, parameter ):
 		self.print_mutex.acquire()

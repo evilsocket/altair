@@ -32,6 +32,9 @@ class Plugin:
 		
 	def onVulnerabilityFound( self, target, kbitem ):
 		pass
+		
+	def onScanFinished( self, target ):
+		pass
 	
 class PluginManager:
 	def __init__( self, path, edispatcher ):

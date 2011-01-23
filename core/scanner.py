@@ -43,107 +43,107 @@ class ScannerThread(Thread):
 		return rand
 		
 	def run( self ):
-		try:
 			for payload in self.kbitem.payloads:
-				if (payload.scope == '*' or payload.scope.lower() == 'get') and isinstance( self.target, GetRequest ):
-					for param in self.target.url.params.keys():
-						target = self.target.copy()
-						target.__class__ = GetRequest
-						p 	   = payload.copy()
-						if "@RANDOM" in p.data:
-							random = self.__genRandom()
-							p.data = p.data.replace( "@RANDOM", random )
+				try:
+					if (payload.scope == '*' or payload.scope.lower() == 'get') and isinstance( self.target, GetRequest ):
+						for param in self.target.url.params.keys():
+							target = self.target.copy()
+							target.__class__ = GetRequest
+							p 	   = payload.copy()
+							if "@RANDOM" in p.data:
+								random = self.__genRandom()
+								p.data = p.data.replace( "@RANDOM", random )
+								
+							target.setParam( param, p.data )
 							
-						target.setParam( param, p.data )
-						
-						response = target.fetch()
-						
-						for m in self.kbitem.matches:
-							m = m.copy()
-							if "@PAYLOAD" in m.data:
-								m.data = m.data.replace( "@PAYLOAD", p.data )
-							if "@RANDOM" in m.data:
-								m.data = m.data.replace( "@RANDOM", random )
-							if m.match(response):
-								self.ed.vulnerability( target, self.kbitem, param )
-								return
-				elif (payload.scope == '*' or payload.scope.lower() == 'post') and isinstance( self.target, PostRequest ):
-					for field in self.target.fields.keys():
-						target = self.target.copy()
-						target.__class__ = PostRequest
-						p 	   = payload.copy()
-						if "@RANDOM" in p.data:
-							random = self.__genRandom()
-							p.data = p.data.replace( "@RANDOM", random )
+							response = target.fetch()
 							
-						target.setField( field, p.data )
-						
-						response = target.fetch()
-						
-						for m in self.kbitem.matches:
-							m = m.copy()
-							if "@PAYLOAD" in m.data:
-								m.data = m.data.replace( "@PAYLOAD", p.data )
-							if "@RANDOM" in m.data:
-								m.data = m.data.replace( "@RANDOM", random )
-							if m.match(response):
-								self.ed.vulnerability( target, self.kbitem, field )
-								return
-					for param in self.target.url.params.keys():
-						target = self.target.copy()
-						target.__class__ = PostRequest
-						p 	   = payload.copy()
-						if "@RANDOM" in p.data:
-							random = self.__genRandom()
-							p.data = p.data.replace( "@RANDOM", random )
+							for m in self.kbitem.matches:
+								m = m.copy()
+								if "@PAYLOAD" in m.data:
+									m.data = m.data.replace( "@PAYLOAD", p.data )
+								if "@RANDOM" in m.data:
+									m.data = m.data.replace( "@RANDOM", random )
+								if m.match(response):
+									self.ed.vulnerability( target, self.kbitem, param )
+									return
+					elif (payload.scope == '*' or payload.scope.lower() == 'post') and isinstance( self.target, PostRequest ):
+						for field in self.target.fields.keys():
+							target = self.target.copy()
+							target.__class__ = PostRequest
+							p 	   = payload.copy()
+							if "@RANDOM" in p.data:
+								random = self.__genRandom()
+								p.data = p.data.replace( "@RANDOM", random )
+								
+							target.setField( field, p.data )
 							
-						target.setParam( param, p.data )
+							response = target.fetch()
+							
+							for m in self.kbitem.matches:
+								m = m.copy()
+								if "@PAYLOAD" in m.data:
+									m.data = m.data.replace( "@PAYLOAD", p.data )
+								if "@RANDOM" in m.data:
+									m.data = m.data.replace( "@RANDOM", random )
+								if m.match(response):
+									self.ed.vulnerability( target, self.kbitem, field )
+									return
+						for param in self.target.url.params.keys():
+							target = self.target.copy()
+							target.__class__ = PostRequest
+							p 	   = payload.copy()
+							if "@RANDOM" in p.data:
+								random = self.__genRandom()
+								p.data = p.data.replace( "@RANDOM", random )
+								
+							target.setParam( param, p.data )
+							
+							response = target.fetch()
+							
+							for m in self.kbitem.matches:
+								m = m.copy()
+								if "@PAYLOAD" in m.data:
+									m.data = m.data.replace( "@PAYLOAD", p.data )
+								if "@RANDOM" in m.data:
+									m.data = m.data.replace( "@RANDOM", random )
+								if m.match(response):
+									self.ed.vulnerability( target, self.kbitem, param )
+									return
+					elif payload.scope.lower() == 'header':
+						connection = httplib.HTTPConnection( target.url.netloc )
+						connection.request( "HEAD", "/" )
+						response = connection.getResponse()
+						headers  = response.getheaders()
+						for header in headers:
+							for m in self.kbitem.matches:
+								if m.match(header[1]):
+									self.ed.vulnerability( target, self.kbitem, None )
+									return
+					elif payload.scope.lower() == 'http':
+						resp404 = None
+						try:
+							non_existent_url      = target.url.copy()
+							non_existent_url.path =  "/%s" % self.__genRandom()
+							non_existent          = GetRequest(non_existent_url)
+							resp404				  = non_existent.fetch()
+						except:
+							pass
 						
-						response = target.fetch()
+						url    = Url( payload.data, self.target.url.netloc, self.target.url.scheme, '/' )
+						target = GetRequest(url)
 						
-						for m in self.kbitem.matches:
-							m = m.copy()
-							if "@PAYLOAD" in m.data:
-								m.data = m.data.replace( "@PAYLOAD", p.data )
-							if "@RANDOM" in m.data:
-								m.data = m.data.replace( "@RANDOM", random )
-							if m.match(response):
-								self.ed.vulnerability( target, self.kbitem, param )
-								return
-				elif payload.scope.lower() == 'header':
-					connection = httplib.HTTPConnection( target.url.netloc )
-					connection.request( "HEAD", "/" )
-					response = connection.getResponse()
-					headers  = response.getheaders()
-					for header in headers:
-						for m in self.kbitem.matches:
-							if m.match(header[1]):
+						try:
+							response = target.fetch()
+							if resp404 == None or response != resp404:	
 								self.ed.vulnerability( target, self.kbitem, None )
 								return
-				elif payload.scope.lower() == 'http':
-					resp404 = None
-					try:
-						non_existent_url      = target.url.copy()
-						non_existent_url.path =  "/%s" % self.__genRandom()
-						non_existent          = GetRequest(non_existent_url)
-						resp404				  = non_existent.fetch()
-					except:
-						pass
-					
-					url    = Url( payload.data, self.target.url.netloc, self.target.url.scheme, '/' )
-					target = GetRequest(url)
-					
-					try:
-						response = target.fetch()
-						if resp404 == None or response != resp404:	
-							self.ed.vulnerability( target, self.kbitem, None )
-							return
-					except HTTPError:
-						pass					
-		except HTTPError as e:
-			self.ed.warning(e)
-		except:
-			pass
+						except HTTPError:
+							pass					
+				except HTTPError as e:
+					self.ed.warning(e)
+				except:
+					pass
 		
 class Scanner:
 	def __init__( self, kb, cfg, targets, edispatcher ):

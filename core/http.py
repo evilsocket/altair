@@ -21,6 +21,8 @@
 from urlparse import urlparse
 from urllib import quote, unquote, urlencode
 import urllib2
+import re
+import os
 
 class Url:
 	def __init__( self, url, default_netloc = '', default_scheme = 'http', default_path = '/' ):
@@ -34,6 +36,13 @@ class Url:
 		# remove default net location from path
 		if self.netloc in self.path:
 			self.path = self.path.replace( self.netloc, '' )
+			
+		# fix path
+		if self.path[0] != '/':
+			if re.match( '^.+\.[^\.]+$', self.path ):
+				self.path = os.path.split(default_path)[0] + "/" + self.path
+			else:
+				self.path = default_path + "/" + self.path
 		
 		# fix relative path
 		if '.' in self.path:
@@ -48,7 +57,7 @@ class Url:
 					path.append(item)
 			
 			self.path = "/%s" % "/".join(path)
-			
+						
 		# split and parse params
 		if self.query != '':
 			self.__parseQuery()
@@ -60,8 +69,11 @@ class Url:
 		self.params = {}
 		kvals 	    = self.query.split('&')
 		for kval in kvals:
-			(key, value) = kval.split('=',2)
-			self.params[key] = quote( unquote(value) )
+			if '=' in kval:
+				(key, value) = kval.split('=',2)
+				self.params[key] = quote( unquote(value) )
+			else:
+				self.params[kval] = ''
 			
 	def __composeQuery( self ):
 		kvs = []
@@ -92,18 +104,35 @@ class Url:
 	
 	def __str__( self ):
 		return "URL ( scheme = %s, netloc = %s, path = %s, params = %s, query = %s)" % (self.scheme,self.netloc,self.path,self.params,self.query)
-		
+
+class RedirectHandler(urllib2.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        m = req.get_method()
+        if (code in (301, 302, 303, 307) and m in ("GET", "HEAD") or code in (301, 302, 303) and m == "POST"):
+            newurl = newurl.replace(' ', '%20')
+            newheaders = dict((k,v) for k,v in req.headers.items()
+                              if k.lower() not in ("content-length", "content-type")
+                             )
+            
+            return urllib2.Request( newurl,
+                            headers = newheaders,
+                            origin_req_host=req.get_origin_req_host(),
+                            unverifiable=True)
+        else:
+            raise HTTPError(req.get_full_url(), code, msg, headers, fp)
+            
 class Request:
 	def __init__( self, url ):
 		self.type		= 0
 		self.url        = url.copy()
 		self.dyn_url    = url.copy()
+		self.redirect   = None
 		self.headers    = {}
 		self.fields	    = {}
 		self.dyn_fields = {}
 	
 	def copy( self ):
-		req = Request( self.url )
+		req 		   = Request( self.url )
 		req.type       = self.type
 		req.headers    = self.headers.copy()
 		req.fields     = self.fields.copy()
@@ -146,9 +175,17 @@ class Request:
 			return True
 			
 	def fetch( self ):
-		req = urllib2.Request( self.dyn_url.get(), urlencode(self.dyn_fields) if self.dyn_fields != {} else None, self.headers )
-		res = urllib2.urlopen(req)
-		return res.read()
+		self.redirect = None
+		
+		req    = urllib2.Request( self.dyn_url.get(), urlencode(self.dyn_fields) if self.dyn_fields != {} else None, self.headers )
+		opener = urllib2.build_opener( RedirectHandler() )
+		res    = opener.open(req)
+		resp   = res.read()
+		
+		if res.url != ("%s://%s%s" % ( self.url.scheme, self.url.netloc, self.url.path )):
+			self.redirect = res.url
+			
+		return resp
 		
 class GetRequest(Request):
 	def __init__( self, url ):
