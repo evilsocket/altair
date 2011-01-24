@@ -79,7 +79,7 @@ class Parser(HTMLParser):
 			response = re.sub( "value\s*=\s*([^\"'\s>]+)" , r'value="\1"', response )
 			
 			response = BeautifulSoup(response).prettify()
-			
+						
 			self.current = request.url
 			
 			self.ed.parsing( request.url )
@@ -97,7 +97,7 @@ class Parser(HTMLParser):
 						if req not in self.requests:
 							self.requests.append( req )
 		except HTTPError as e:	
-			self.ed.warning( e )
+			self.ed.warning( "%s (%s)" % (request.url.get(),e) )
 		except Exception as e:
 			self.ed.warning( e )
 		finally:
@@ -116,13 +116,16 @@ class Parser(HTMLParser):
 			if aname == name:
 				return a[1]
 		return default
+		
+	def __sameDomain( self, domain ):
+		return re.match( ".*\.?%s" % re.escape(self.domain), domain ) or re.match( ".*\.?%s" % re.escape(domain), self.domain )
 	
 	def handle_starttag( self, tag, attrs ):
 		tag = tag.lower()
 		if tag == 'a':
 			href = self.__get_attr( 'href', attrs )
-			url  = Url( href, default_netloc = self.domain, default_path = self.current.path )
-			if url.netloc == self.domain and url.scheme == self.scheme:
+			url  = Url( href, default_netloc = self.domain, default_path = self.current.path )				
+			if self.__sameDomain(url.netloc) and url.scheme == self.scheme:
 				req = GetRequest( url )
 				if req not in self.requests:
 					self.requests.append( req )
@@ -131,7 +134,7 @@ class Parser(HTMLParser):
 			for ext in self.config.AllowedExtensions:
 				if re.match( ".+\.%s.*" % ext, src ):
 					url = Url( src, default_netloc = self.domain, default_path = self.current.path )
-					if url.netloc == self.domain and url.scheme == self.scheme:
+					if self.__sameDomain(url.netloc) and url.scheme == self.scheme:
 						req = GetRequest( url )
 						if req not in self.requests:
 							self.requests.append( req )
@@ -139,7 +142,7 @@ class Parser(HTMLParser):
 		elif tag == 'frame' or tag == 'iframe':
 			src = self.__get_attr( 'src', attrs )
 			url = Url( src, default_netloc = self.domain, default_path = self.current.path )
-			if url.netloc == self.domain and url.scheme == self.scheme:
+			if self.__sameDomain(url.netloc) and url.scheme == self.scheme:
 				req = GetRequest( url )
 				if req not in self.requests:
 					self.requests.append( req )
@@ -162,14 +165,14 @@ class Parser(HTMLParser):
 			if self.form['method'] == 'get':
 				link = self.form['action'] + "?" + urlencode( self.form['data'] )
 				url  = Url( link, default_netloc = self.domain )
-				if url.netloc == self.domain and url.scheme == self.scheme:
+				if self.__sameDomain(url.netloc) and url.scheme == self.scheme:
 					req = GetRequest( url )
 					if req not in self.requests:
 						self.requests.append( req )
 			elif self.form['method'] == 'post':
 				link = self.form['action']
 				url  = Url( link, default_netloc = self.domain, default_path = self.current.path )
-				if url.netloc == self.domain and url.scheme == self.scheme:
+				if self.__sameDomain(url.netloc) and url.scheme == self.scheme:
 					req = PostRequest(url)
 					for name, value in self.form['data'].items():
 						req.addField( name, value )
