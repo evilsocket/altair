@@ -89,7 +89,7 @@ class Url:
 			return False
 		elif self.path != url.path:
 			return False
-		elif self.params.keys() != url.params.keys():
+		elif self.params.keys().sort() != url.params.keys().sort():
 			return False
 		else:
 			return True 
@@ -165,7 +165,7 @@ class Request:
 			return False
 		if self.url != req.url:
 			return False
-		elif self.fields != req.fields:
+		elif self.fields.keys().sort() != req.fields.keys().sort():
 			return False
 		else:
 			return True

@@ -102,6 +102,9 @@ class Parser(HTMLParser):
 			self.ed.warning( e )
 		finally:
 			self.parsed.append( request )
+			if request.redirect != None:
+				url = Url( request.redirect, default_netloc = self.domain, default_path = self.root.path )
+				self.parsed.append( GetRequest(url) )
 		
 		for req in self.requests:
 			if req not in self.parsed:
