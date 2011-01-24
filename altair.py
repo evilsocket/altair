@@ -24,10 +24,10 @@ from core.kb import *
 from core.scanner import Scanner
 from core.edispatcher import EventDispatcher
 from core.plugin import PluginManager
+from optparse import OptionParser, OptionGroup 
 import sys
 import re
 import os
-from optparse import OptionParser, OptionGroup 
 
 def csv2array( csv ):
 	items = csv.split(',')
@@ -73,6 +73,7 @@ parser.add_option( "-u", "--url",          action="store",      dest="url",     
 parser.add_option( "-O", "--output",	   action="store",		dest="OutFile",			  default=None, 	   help="Output status and result to file." )
 parser.add_option( "",   "--import-files", action="store",	    dest="ImportFiles",		  default=None,		   help="Import sensitive files list from this file." )
 parser.add_option( "",   "--import-dirs",  action="store",	    dest="ImportDirs",		  default=None,		   help="Import sensitive directories list from this file." )
+parser.add_option( "",   "--single-mode",  action="store_true", dest="SingleMode",		  default=False,	   help="Single url mode, scan only this url for vulnerabilities (the URL has to have at least one parameter)." )
 
 (o,args) = parser.parse_args()
 
@@ -132,6 +133,10 @@ for filter in o.KbFilter:
 		docrawl = True
 		break
 
+if o.SingleMode == True:
+	ed.warning( "Single url mode ." )
+	docrawl = False
+
 if docrawl == True:
 	ed.status( "Starting crawling process on %s ..." % o.url )
 	parser  = Parser( root, o, ed )
@@ -146,10 +151,11 @@ if docrawl == True:
 else:
 	ed.warning( "Skipping crawling process ." )
 	targets = [ GetRequest(root) ]
-	
+
+
 try:
 	scanner = Scanner( kb, o, targets, ed )
-	
+		
 	ed.status( "Running vulnerability scanner ..." )
 	
 	scanner.start()

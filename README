@@ -46,6 +46,10 @@ Options:
                         Import sensitive files list from this file.
   --import-dirs=IMPORTDIRS
                         Import sensitive directories list from this file.
+  --single-mode         Single url mode, scan only this url for
+                        vulnerabilities (the URL has to have at least one
+                        parameter).
+
 
 ----------------------------------------------------------------------------------------
 
