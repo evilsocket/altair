@@ -21,6 +21,7 @@
 from urlparse import urlparse
 from urllib import quote, unquote, urlencode
 import urllib2
+import unicodedata
 import re
 import os
 
@@ -33,6 +34,10 @@ class Url:
 		self.params = {}
 		self.query  = p.query
 		
+		# decode
+	 	if isinstance( self.path, unicode ):
+	 		self.path = unicodedata.normalize( 'NFKD', self.path ).encode('ascii','ignore')
+
 		# remove default net location from path
 		if self.netloc in self.path:
 			self.path = self.path.replace( self.netloc, '' )

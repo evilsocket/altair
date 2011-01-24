@@ -45,13 +45,13 @@ class ScannerThread(Thread):
 	def run( self ):
 			for payload in self.kbitem.payloads:
 				try:
+					random = self.__genRandom()
 					if (payload.scope == '*' or payload.scope.lower() == 'get') and isinstance( self.target, GetRequest ):
 						for param in self.target.url.params.keys():
 							target = self.target.copy()
 							target.__class__ = GetRequest
 							p 	   = payload.copy()
 							if "@RANDOM" in p.data:
-								random = self.__genRandom()
 								p.data = p.data.replace( "@RANDOM", random )
 								
 							target.setParam( param, p.data )
@@ -73,7 +73,6 @@ class ScannerThread(Thread):
 							target.__class__ = PostRequest
 							p 	   = payload.copy()
 							if "@RANDOM" in p.data:
-								random = self.__genRandom()
 								p.data = p.data.replace( "@RANDOM", random )
 								
 							target.setField( field, p.data )
@@ -94,7 +93,6 @@ class ScannerThread(Thread):
 							target.__class__ = PostRequest
 							p 	   = payload.copy()
 							if "@RANDOM" in p.data:
-								random = self.__genRandom()
 								p.data = p.data.replace( "@RANDOM", random )
 								
 							target.setParam( param, p.data )
@@ -111,9 +109,10 @@ class ScannerThread(Thread):
 									self.ed.vulnerability( target, self.kbitem, param )
 									return
 					elif payload.scope.lower() == 'header':
+						target 	   = self.target.copy()
 						connection = httplib.HTTPConnection( target.url.netloc )
 						connection.request( "HEAD", "/" )
-						response = connection.getResponse()
+						response = connection.getresponse()
 						headers  = response.getheaders()
 						for header in headers:
 							for m in self.kbitem.matches:

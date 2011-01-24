@@ -70,6 +70,7 @@ parser.add_option( "-k", "--kb", 	       action="store",      dest="KbFile",    
 parser.add_option( "-L", "--load-modules", action="store",		dest="Modules", 		  default='',		   help="Comma separated modules names to load or 'all' to load them all, use the --list-modules flag to a list of available modules." )
 parser.add_option( "-M", "--list-modules", action="store_true", dest="ModList",           default=False,       help="Print a list of available modules." )
 parser.add_option( "-u", "--url",          action="store",      dest="url",               default=None, 	   help="Url to test, mandatory." )
+parser.add_option( "-O", "--output",	   action="store",		dest="OutFile",			  default=None, 	   help="Output status and result to file." )
 
 (o,args) = parser.parse_args()
 
@@ -99,7 +100,7 @@ o.KbFilter   		= csv2array(o.KbFilter)
 o.AllowedExtensions = csv2array(o.AllowedExtensions)
 o.Modules			= csv2array(o.Modules)
 
-ed = EventDispatcher(None)
+ed = EventDispatcher( o.OutFile, None )
 pm = PluginManager( "%s/core/modules" % path, ed )
 ed.pmanager = pm
 
