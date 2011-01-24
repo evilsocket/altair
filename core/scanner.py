@@ -154,10 +154,10 @@ class ScannerThread(Thread):
 									if m.match(header[1]):
 										self.ed.vulnerability( target, self.kbitem, None )
 										return
-					except HTTPError as e:
-						self.ed.warning(e)
-					#except:
-					#	pass
+					# except HTTPError as e:
+					#	self.ed.warning(e)
+					except:
+						pass
 		
 class Scanner:
 	def __init__( self, kb, cfg, targets, edispatcher ):

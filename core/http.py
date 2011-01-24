@@ -18,8 +18,8 @@
 # program. If not, go to http://www.gnu.org/licenses/gpl.html
 # or write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-from urlparse import urlparse
 from urllib import quote, unquote, urlencode
+import urlparse
 import urllib2
 import unicodedata
 import re
@@ -27,7 +27,7 @@ import os
 
 class Url:
 	def __init__( self, url, default_netloc = '', default_scheme = 'http', default_path = '/' ):
-		p = urlparse(url)
+		p = urlparse.urlparse(url)
 		self.scheme = p.scheme if p.scheme != '' else default_scheme
 		self.netloc = p.netloc if p.netloc != '' else default_netloc
 		self.path   = p.path   if p.path   != '' else default_path 
@@ -65,34 +65,18 @@ class Url:
 						
 		# split and parse params
 		if self.query != '':
-			self.__parseQuery()
+			self.params = {}
+			args  		= urlparse.parse_qs( unquote(self.query) )
+			for k,v in args.items():
+				self.params[k] = v[0]
 			
 	def copy( self ):
 		return Url( self.get(), self.netloc, self.scheme, self.path )
-	
-	def __parseQuery( self ):
-		self.params = {}
-		query		= unquote(self.query)
-		kvals 	    = query.split('&')
-		for kval in kvals:
-			if kval[-1] == '=':
-				kval = kval[:-1]
-			if '=' in kval:
-				try:
-					(key, value) = kval.split('=',2)
-					
-					self.params[key] = quote( unquote(value) )
-				except:
-					pass
-			else:
-				self.params[kval] = ''
-			
+		
 	def __composeQuery( self ):
 		kvs = []
 		for k, v in self.params.items():
-			# i know it seems stupid to unquote and quote, but i don't know for sure
-			# if k or v are already quoted, so i unquote them just to be sure :)
-			kvs.append( "%s=%s" % ( quote( unquote(k) ), quote( unquote(v) ) ) )	
+			kvs.append( "%s=%s" % ( quote( k ), quote( v ) ) )	
 		self.query = "&".join(kvs)
 	
 	def __ne__ ( self, url ):
