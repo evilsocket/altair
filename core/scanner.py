@@ -45,10 +45,8 @@ class HttpVerifierThread(Thread):
 			response = target.fetch()
 			if self.resp404 == None or response != self.resp404:	
 				self.ed.vulnerability( target, self.kbitem, None )
-		except HTTPError:
+		except:
 			pass
-		except Exception as e:
-			self.ed.warning(e)
 
 class ScannerThread(Thread):
 	def __init__( self, kbitem, target, edispatcher ):

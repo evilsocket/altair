@@ -72,17 +72,18 @@ class Url:
 	
 	def __parseQuery( self ):
 		self.params = {}
-		kvals 	    = self.query.split('&')
+		query		= unquote(self.query)
+		kvals 	    = query.split('&')
 		for kval in kvals:
+			if kval[-1] == '=':
+				kval = kval[:-1]
 			if '=' in kval:
 				try:
 					(key, value) = kval.split('=',2)
 					
 					self.params[key] = quote( unquote(value) )
-				except ValueError:
-					items = kval.split(';')
-					for item in items:
-						kvals.append( item )
+				except:
+					pass
 			else:
 				self.params[kval] = ''
 			
