@@ -29,6 +29,9 @@ class Payload:
 	def copy( self ):
 		return Payload( self.scope, self.data )
 		
+	def toxml( self ):
+		return "<payload scope='%s'><![CDATA[%s]]></payload>" % ( self.scope, self.data )
+		
 class Match:
 	def __init__( self, type, data ):
 		self.type = type
@@ -36,6 +39,9 @@ class Match:
 		
 	def copy( self ):
 		return Match( self.type, self.data )
+		
+	def toxml( self ):
+		return "<match type='%s'><![CDATA[%s]]></payload>" % ( self.type, self.data )
 		
 	def match( self, string ):
 		try:
@@ -60,6 +66,18 @@ class KBItem:
 		
 	def addMatch( self, m ):
 		self.matches.append(m)
+		
+	def toxml( self ):
+		xml = ( "\t<item name='%s' severity='%s' id='%s'>\n" % ( self.name, self.severity, self.id ) ) + \
+			  ( "\t\t<description>%s</description>\n" % self.description )
+		for p in self.payloads:
+			xml += "\t\t%s\n" %  p.toxml()
+		for m in self.matches:
+			xml += "\t\t%s\n" % m.toxml()
+		
+		xml += "\t</item>"
+		
+		return xml
 		
 class KnowledgeBase:
 	def __init__( self, filename, filter ):
@@ -93,3 +111,47 @@ class KnowledgeBase:
 					kbitem.addMatch(match)
 			
 				self.items.append(kbitem)
+	
+	def importFiles( self, filename ):
+		fd = open(filename)
+		
+		for idx, item in enumerate(self.items):
+			if item.id == 'files':
+				break
+		
+		self.items[idx].payloads = self.items[idx].matches = []
+		
+		for line in iter(fd):
+   			line = line.strip()
+   			if line != '':
+   				self.items[idx].addPayload( Payload( 'HTTP', line ) )
+   				
+		fd.close()
+	
+	def importDirs( self, filename ):
+		fd = open(filename)
+		
+		for idx, item in enumerate(self.items):
+			if item.id == 'dirs':
+				break
+		
+		self.items[idx].payloads = self.items[idx].matches = []
+		
+		for line in iter(fd):
+   			line = line.strip()
+   			if line != '':
+   				self.items[idx].addPayload( Payload( 'HTTP', line ) )
+   				
+		fd.close()
+		
+	def toxml( self ):
+		xml = "<altair-kb>\n"
+		for i in self.items:
+			xml += i.toxml() + "\n"
+		xml += "</<altair-kb>"
+		return xml
+		
+	def save( self, filename ):
+		fd = open( filename, "w+t" )
+		fd.write( self.toxml() )
+		fd.close()

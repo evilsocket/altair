@@ -42,6 +42,10 @@ Options:
   -u URL, --url=URL     Url to test, mandatory.
   -O OUTFILE, --output=OUTFILE
                         Output status and result to file.
+  --import-files=IMPORTFILES
+                        Import sensitive files list from this file.
+  --import-dirs=IMPORTDIRS
+                        Import sensitive directories list from this file.
 
 ----------------------------------------------------------------------------------------
 
@@ -67,7 +71,7 @@ Potential sensitive directory .
 
 ----------------------------------------------------------------------------------------
 
-[evilsocket@shinigami altair] ./altair.py -M
+[evilsocket@shinigami altair] altair -M
 
 [+] 'lfier' by Simone Margaritelli <evilsocket@gmail.com> : This module will try to read some standard system files upon LFI vulnerabilities.
 [+] 'sqlmap' by Simone Margaritelli <evilsocket@gmail.com> : This module will ask the user to launch sqlmap when a sql injection is found.

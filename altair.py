@@ -71,6 +71,8 @@ parser.add_option( "-L", "--load-modules", action="store",		dest="Modules", 		  
 parser.add_option( "-M", "--list-modules", action="store_true", dest="ModList",           default=False,       help="Print a list of available modules." )
 parser.add_option( "-u", "--url",          action="store",      dest="url",               default=None, 	   help="Url to test, mandatory." )
 parser.add_option( "-O", "--output",	   action="store",		dest="OutFile",			  default=None, 	   help="Output status and result to file." )
+parser.add_option( "",   "--import-files", action="store",	    dest="ImportFiles",		  default=None,		   help="Import sensitive files list from this file." )
+parser.add_option( "",   "--import-dirs",  action="store",	    dest="ImportDirs",		  default=None,		   help="Import sensitive directories list from this file." )
 
 (o,args) = parser.parse_args()
 
@@ -86,7 +88,7 @@ elif o.ModList == True:
 	for plugin in pm.plugins:
 		print "[+] '%s' by %s : %s" % (plugin.name, plugin.author, plugin.description)
 	quit()
-
+	
 if o.url == None:
 	parser.error( "No url specified!" )
 elif not re.match( '^[^\:]+\:\/\/.+$', o.url ):
@@ -107,7 +109,21 @@ ed.pmanager = pm
 pm.loadPlugins( o.Modules )
 
 ed.status( "Loading the knowledge base from %s ..." % o.KbFile )
-kb      = KnowledgeBase( o.KbFile, o.KbFilter )
+kb = KnowledgeBase( o.KbFile, o.KbFilter )
+
+# handle sensitive files import
+if o.ImportFiles != None:
+	kb.importFiles( o.ImportFiles )
+# handle sensitive directories import
+if o.ImportDirs != None:
+	kb.importDirs( o.ImportDirs )
+
+if o.ImportFiles != None or o.ImportDirs != None:
+	resp = raw_input( "[!] The file you've just imported will NOT be saved permanently into the knowledge base, do you want to store it (overwriting existing files and/or dirs entries) ? [y|n] " )
+	if resp.strip() != '' and resp in "Yy":
+		kb.save( o.KbFile )
+		print "[@] Imported file succesfully stored to %s ." % o.KbFile
+
 root    = Url( o.url )
 docrawl = False
 
