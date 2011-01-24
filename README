@@ -2,11 +2,11 @@ ALTAIR - A Modular Web Vulnerability Scanner
 Copyleft by Simone Margaritelli <evilsocket@gmail.com>
 http://www.evilsocket.net - http://www.backbox.org
 
-Usage: altair.py [options] -u <target>
+Usage: altair [options] -u <target>
 
 EXAMPLES:
-  altair.py --filter=lfi,rfi --url=http://www.somesite.com
-  altair.py --filter=sqli --load-modules=sqlmap --url=http://www.somesite.com
+  altair --filter=lfi,rfi --url=http://www.somesite.com
+  altair --filter=sqli --load-modules=sqlmap --url=http://www.somesite.com
 
 Options:
   -h, --help            show this help message and exit
@@ -40,6 +40,8 @@ Options:
                         available modules.
   -M, --list-modules    Print a list of available modules.
   -u URL, --url=URL     Url to test, mandatory.
+  -O OUTFILE, --output=OUTFILE
+                        Output status and result to file.
 
 ----------------------------------------------------------------------------------------
 
